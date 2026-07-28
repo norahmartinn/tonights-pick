@@ -39,7 +39,7 @@ npm run build
 npx wrangler deploy --config .output/server/wrangler.json --name tonights-pick
 ```
 
-Queda publicada en `https://tonights-pick.<tu-subdominio>.workers.dev`.
+Publicada en **https://tonights-pick.norahmartinn.workers.dev**
 
 El `--name` es necesario porque nitro genera el Worker con el nombre por defecto
 `tanstack-start-ts` (el del `package.json`).
