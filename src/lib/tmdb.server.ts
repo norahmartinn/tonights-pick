@@ -145,7 +145,19 @@ export async function fetchDetails(
       return nicho !== 0 ? nicho : a.display_priority - b.display_priority;
     });
     // TMDB trae algún nombre con espacios sobrantes ("Movistar Plus+ Ficción Total ")
-    const platform = (proveedores[0]?.provider_name ?? "").trim();
+    // TMDB nombra los canales de pago con el proveedor pegado detrás
+    // ("Animebox Channel Amazon Channel"). Legible: "Animebox (Amazon)".
+    const legible = (n: string) =>
+      n
+        .trim()
+        .replace(/\s+Amazon Channel$/i, " (Amazon)")
+        .replace(/\s+Apple TV Channel$/i, " (Apple TV)")
+        .replace(/\s+Roku Premium Channel$/i, " (Roku)")
+        .replace(/\s+Channel(?=\s*\()/i, "")
+        .replace(/\s{2,}/g, " ")
+        .trim();
+
+    const platform = legible(proveedores[0]?.provider_name ?? "");
 
     return {
       tmdb_id: d.id,
