@@ -189,7 +189,7 @@ function HomePage() {
                       key={k}
                       type="button"
                       onClick={() => setKind(k)}
-                      className={`group flex items-center justify-center gap-1.5 py-2 rounded-xl text-sm font-bold elegant-border-sm transition-all btn-lift ${
+                      className={`group flex items-center justify-center gap-1.5 py-3 sm:py-2 rounded-xl text-sm font-bold elegant-border-sm transition-all btn-lift ${
                         active
                           ? "bg-primary text-primary-foreground"
                           : "bg-background hover:bg-muted text-foreground"
@@ -248,7 +248,7 @@ function HomePage() {
                       key={k}
                       type="button"
                       onClick={() => setKind(k)}
-                      className={`group flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-bold elegant-border-sm transition-all btn-lift ${
+                      className={`group flex items-center justify-center gap-1.5 py-3 sm:py-2.5 rounded-xl text-sm font-bold elegant-border-sm transition-all btn-lift ${
                         active
                           ? "bg-primary text-primary-foreground"
                           : "bg-background hover:bg-muted text-foreground"
@@ -286,7 +286,7 @@ function HomePage() {
                 <button
                   type="button"
                   onClick={refreshSuggestions}
-                  className="group p-2 rounded-full hover:bg-muted text-muted-foreground hover:text-foreground transition btn-lift"
+                  className="group p-3 sm:p-2 rounded-full hover:bg-muted text-muted-foreground hover:text-foreground transition btn-lift"
                   aria-label="Shuffle the notes"
                   title="A different set of notes"
                 >

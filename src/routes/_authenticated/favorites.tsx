@@ -78,7 +78,7 @@ function FavoritesPage() {
                 {f.title}
                 <button
                   onClick={() => del.mutate(f.id)}
-                  className="group absolute right-0 top-0 p-1.5 rounded-full hover:bg-muted text-muted-foreground hover:text-destructive transition btn-lift"
+                  className="group absolute right-0 top-0 p-3 -mt-1.5 -mr-1.5 sm:p-1.5 sm:mt-0 sm:mr-0 rounded-full hover:bg-muted text-muted-foreground hover:text-destructive transition btn-lift"
                   aria-label="Remove"
                 >
                   <Trash2 size={16} className="btn-icon" />

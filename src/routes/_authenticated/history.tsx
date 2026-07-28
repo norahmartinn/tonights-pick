@@ -110,7 +110,7 @@ function HistoryPage() {
                   {h.title}
                   <button
                     onClick={() => del.mutate(h.id)}
-                    className="group absolute right-0 top-0 p-1.5 rounded-full hover:bg-muted text-muted-foreground hover:text-destructive transition btn-lift"
+                    className="group absolute right-0 top-0 p-3 -mt-1.5 -mr-1.5 sm:p-1.5 sm:mt-0 sm:mr-0 rounded-full hover:bg-muted text-muted-foreground hover:text-destructive transition btn-lift"
                     aria-label="Remove"
                   >
                     <Trash2 size={16} className="btn-icon" />
@@ -135,7 +135,7 @@ function HistoryPage() {
                         }
                         title={label}
                         aria-label={label}
-                        className={`group text-base px-2.5 py-1 rounded-full transition btn-lift ${
+                        className={`group text-base px-3.5 py-2.5 sm:px-2.5 sm:py-1 rounded-full transition btn-lift ${
                           active ? "bg-primary text-primary-foreground" : "hover:bg-muted"
                         }`}
                       >
