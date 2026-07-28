@@ -93,14 +93,132 @@ No markdown, no commentary.${tasteContext}`;
         : kind === "tv"
         ? "\nIt MUST be a TV SHOW / series. Do NOT recommend a movie."
         : "";
-    const userMsg = `User mood / request: "${data.prompt}".${exclude}${kindInstruction}\nPick ONE perfect title.`;
+    // El modelo no sabe en qué día vive: sin esta línea, "reciente" o "de los
+    // últimos cinco años" se resuelven contra su corte de entrenamiento y
+    // devuelve cosas de hace una década.
+    const hoy = new Date();
+    const fecha = `Today is ${hoy.toISOString().slice(0, 10)}. The current year is ${hoy.getUTCFullYear()}. Resolve any relative time reference ("recent", "last five years", "this decade") against that date.`;
 
-    const content = await chatJSON(system, userMsg);
-    let parsed: Recommendation;
-    try {
-      parsed = JSON.parse(content);
-    } catch {
-      throw new Error("AI returned an invalid response. Please try again.");
+    // ¿Pide algo reciente? El modelo no puede saberlo por sí solo: su corte de
+    // conocimiento es anterior. Detectamos la intención y le damos candidatos
+    // reales de TMDB para que elija, en vez de dejarle inventar o tirar de
+    // memoria vieja.
+    const anioActual = hoy.getUTCFullYear();
+    const textoPeticion = data.prompt.toLowerCase();
+
+    // Año suelto en la petición ("de 2024", "en 2025")
+    const anioSuelto = [...textoPeticion.matchAll(/\b(19|20)\d{2}\b/g)]
+      .map((m) => Number(m[0]))
+      .filter((a) => a >= anioActual - 6)
+      .sort()[0];
+
+    // "los últimos N años" / "last N years": hay que restar, no basta con
+    // buscar la palabra "reciente".
+    const NUMEROS: Record<string, number> = {
+      un: 1, uno: 1, one: 1, dos: 2, two: 2, tres: 3, three: 3, cuatro: 4, four: 4,
+      cinco: 5, five: 5, seis: 6, six: 6, siete: 7, seven: 7, ocho: 8, eight: 8,
+      nueve: 9, nine: 9, diez: 10, ten: 10,
+    };
+    const rango = textoPeticion.match(
+      /(?:últimos?|ultimos?|last|past)\s+(\d+|un|uno|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez|one|two|three|four|five|six|seven|eight|nine|ten)\s+(?:años|anos|years)/,
+    );
+    const anioPorRango = rango
+      ? anioActual - (Number(rango[1]) || NUMEROS[rango[1]] || 0)
+      : undefined;
+
+    const pideNovedad =
+      anioSuelto !== undefined ||
+      anioPorRango !== undefined ||
+      /\b(reciente|recientes|nuevo|nueva|novedad|estreno|estrenos|actual|actuales|este año|este ano|recent|new|latest|this year)\b/.test(
+        textoPeticion,
+      );
+
+    // "menos de 90 minutos", "under 100 minutes", "que dure poco"
+    const dur = textoPeticion.match(
+      /(?:menos de|under|less than|shorter than|por debajo de)\s+(\d{2,3})\s*(?:min|minutos|minutes)/,
+    );
+    const duracionMax = dur ? Number(dur[1]) : undefined;
+
+    // Si la petición nombra una nacionalidad, el filtro tiene que llegar a TMDB:
+    // la lista de candidatos viene por popularidad y sin esto sale casi toda en
+    // inglés, tumbando el idioma que pedía la usuaria.
+    const IDIOMAS: [RegExp, string][] = [
+      [/\b(españ|espan|spanish)/, "es"], [/\b(corean|korean)/, "ko"],
+      [/\b(japon|japanese)/, "ja"], [/\b(franc|french)/, "fr"],
+      [/\b(italian)/, "it"], [/\b(alem|german)/, "de"],
+      [/\b(mexican|argentin|chilen|colombian)/, "es"],
+      [/\b(brasil|brazil|portugu)/, "pt"], [/\b(dan[ié]s|danish)/, "da"],
+      [/\b(sueca|swedish)/, "sv"], [/\b(china|chino|chinese)/, "zh"],
+      [/\b(india|hindi|bollywood)/, "hi"], [/\b(turca|turkish)/, "tr"],
+    ];
+    const idiomaPedido = IDIOMAS.find(([re]) => re.test(textoPeticion))?.[1];
+
+    let listaCandidatos = "";
+    let titulosPermitidos: Set<string> | null = null;
+    if (pideNovedad || duracionMax) {
+      try {
+        const { discoverRecent } = await import("./tmdb.server");
+        const desde = pideNovedad ? (anioSuelto ?? anioPorRango ?? anioActual - 2) : null;
+        const candidatos = await discoverRecent(data.kind, desde, 25, duracionMax, idiomaPedido);
+        if (candidatos.length) {
+          const motivo = [
+            desde !== null ? `released from ${desde} onwards` : "",
+            duracionMax ? `under ${duracionMax} minutes long` : "",
+          ].filter(Boolean).join(" and ");
+          titulosPermitidos = new Set(candidatos.map((c) => c.title.toLowerCase()));
+          listaCandidatos =
+            `\n\nThese are REAL titles ${motivo}, verified against a film database. ` +
+            `Your training data cannot confirm this reliably, so you MUST pick one of these and nothing else:\n` +
+            candidatos.map((c) => `- ${c.title} (${c.year})`).join("\n");
+        }
+      } catch {
+        // si TMDB falla seguimos sin lista: mejor una respuesta imperfecta que ninguna
+      }
+    }
+
+    const armarMensaje = (evitar: string[]) => {
+      const veta = [...(data.exclude ?? []), ...evitar];
+      const excluir = veta.length
+        ? `\nDo NOT recommend any of these (already shown or unverifiable): ${veta.join(", ")}.`
+        : "";
+      return `${fecha}\n\nUser mood / request: "${data.prompt}".${excluir}${kindInstruction}${listaCandidatos}\nPick ONE perfect title.`;
+    };
+
+    const pedirTitulo = async (evitar: string[]): Promise<Recommendation> => {
+      const content = await chatJSON(system, armarMensaje(evitar));
+      try {
+        return JSON.parse(content) as Recommendation;
+      } catch {
+        throw new Error("AI returned an invalid response. Please try again.");
+      }
+    };
+
+    const { findTitle } = await import("./tmdb.server");
+
+    let parsed = await pedirTitulo([]);
+
+    // El modelo se salta la lista con cierta frecuencia aunque se le diga que es
+    // obligatoria. Comprobarlo es barato; confiar, no.
+    if (titulosPermitidos && parsed?.title && !titulosPermitidos.has(parsed.title.toLowerCase())) {
+      const segundo = await pedirTitulo([parsed.title]).catch(() => null);
+      if (segundo?.title && titulosPermitidos.has(segundo.title.toLowerCase())) parsed = segundo;
+    }
+
+    let tmdb = await findTitle(parsed.title ?? "", parsed.year, data.kind).catch(() => null);
+
+    // Si TMDB no lo encuentra, lo más probable es que el modelo se lo haya
+    // inventado (pasa sobre todo con peticiones de nicho). Una segunda
+    // oportunidad, vetando el título fantasma, en vez de mostrar una ficha falsa.
+    if (!tmdb && parsed?.title) {
+      const fantasma = parsed.title;
+      const segundo = await pedirTitulo([fantasma]).catch(() => null);
+      if (segundo?.title) {
+        const verificado = await findTitle(segundo.title, segundo.year, data.kind).catch(() => null);
+        if (verificado) {
+          parsed = segundo;
+          tmdb = verificado;
+        }
+      }
     }
 
     const result: Recommendation = {
@@ -118,23 +236,20 @@ No markdown, no commentary.${tasteContext}`;
       media_type: data.kind === "movie" || data.kind === "tv" ? data.kind : undefined,
     };
 
-    // Enrich with TMDB (authoritative source for poster/genre/rating/cast/director).
-    try {
-      const { findTitle } = await import("./tmdb.server");
-      const tmdb = await findTitle(result.title, result.year, data.kind);
-      if (tmdb) {
-        result.title = tmdb.title || result.title;
-        result.year = tmdb.year || result.year;
-        result.genre = tmdb.genre || result.genre;
-        result.rating = tmdb.rating || result.rating;
-        result.poster_url = tmdb.poster_url || result.poster_url;
-        result.director = tmdb.director || result.director;
-        result.cast_members = tmdb.cast_members || result.cast_members;
-        if (tmdb.description) result.description = tmdb.description;
-        result.media_type = tmdb.media_type;
-      }
-    } catch {
-      // non-blocking — fall back to AI-provided data
+    // TMDB manda sobre los metadatos: póster, géneros, nota, reparto y dirección.
+    if (tmdb) {
+      result.title = tmdb.title || result.title;
+      result.year = tmdb.year || result.year;
+      result.genre = tmdb.genre || result.genre;
+      result.rating = tmdb.rating || result.rating;
+      result.poster_url = tmdb.poster_url || result.poster_url;
+      result.director = tmdb.director || result.director;
+      result.cast_members = tmdb.cast_members || result.cast_members;
+      if (tmdb.description) result.description = tmdb.description;
+      result.media_type = tmdb.media_type;
+    } else {
+      // Ni el reintento se pudo verificar: al menos no enseñamos un póster roto.
+      result.poster_url = "";
     }
 
     // Save to history and capture id for feedback

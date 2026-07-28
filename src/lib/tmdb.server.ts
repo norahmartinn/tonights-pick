@@ -133,3 +133,50 @@ export async function fetchDetails(
     return null;
   }
 }
+
+/**
+ * Candidatos reales para peticiones de novedad.
+ *
+ * El modelo tiene corte de conocimiento y no sabe qué se ha estrenado después,
+ * así que para "algo reciente" o "de 2025" no basta con decirle la fecha: hay
+ * que darle títulos que existan. Esto devuelve los más populares del periodo
+ * para que elija entre ellos en vez de inventar.
+ */
+export async function discoverRecent(
+  kind: "movie" | "tv" | "any" | undefined,
+  desdeAnio: number | null,
+  limite = 25,
+  duracionMax?: number,
+  idioma?: string,
+): Promise<{ title: string; year: string; media_type: "movie" | "tv" }[]> {
+  const tipos: ("movie" | "tv")[] = kind === "movie" ? ["movie"] : kind === "tv" ? ["tv"] : ["movie", "tv"];
+  const desde = `${desdeAnio ?? 1900}-01-01`;
+
+  const lotes = await Promise.all(
+    tipos.map(async (tipo) => {
+      const params = new URLSearchParams({
+        sort_by: "popularity.desc",
+        include_adult: "false",
+        "vote_count.gte": "50",
+        page: "1",
+      });
+      if (desdeAnio !== null) {
+        params.set(tipo === "movie" ? "primary_release_date.gte" : "first_air_date.gte", desde);
+      }
+      // La duración solo se puede filtrar en películas; en series TMDB guarda
+      // la del episodio, que no es lo que pregunta la gente.
+      if (duracionMax && tipo === "movie") params.set("with_runtime.lte", String(duracionMax));
+      if (idioma) params.set("with_original_language", idioma);
+      const res = await fetch(`${BASE}/discover/${tipo}?${params}`, { headers: authHeaders() });
+      if (!res.ok) return [];
+      const json = await res.json();
+      return (json.results ?? []).map((r: Record<string, unknown>) => ({
+        title: String(r.title ?? r.name ?? ""),
+        year: String((r.release_date ?? r.first_air_date ?? "") as string).slice(0, 4),
+        media_type: tipo,
+      }));
+    }),
+  );
+
+  return lotes.flat().filter((x) => x.title).slice(0, limite);
+}
