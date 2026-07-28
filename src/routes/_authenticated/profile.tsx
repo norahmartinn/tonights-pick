@@ -65,13 +65,11 @@ function ProfilePage() {
 
   return (
     <AppShell>
-      <div className="pt-7 pb-6 flex items-start gap-3">
-        <div className="flex-1 min-w-0 pt-1">
-          <h1 className="text-[2rem] sm:text-[2.5rem] leading-[1.02] font-display text-balance">
+      <div className="pt-7 pb-6 flex items-center gap-2 sm:gap-4">
+        <h1 className="text-[2rem] sm:text-[2.75rem] leading-[1.02] font-display text-balance min-w-0">
             <span className="italic text-primary">Profile.</span>
           </h1>
-        </div>
-        <img src={mascotWaving} alt="" width={80} height={80} loading="lazy" className="w-16 h-16 sm:w-20 sm:h-20 shrink-0 -mt-1" />
+        <img src={mascotWaving} alt="" width={112} height={112} loading="lazy" className="w-16 h-16 sm:w-28 sm:h-28 shrink-0" />
       </div>
 
       {isLoading && <p className="text-muted-foreground py-8 text-center animate-pulse italic">Opening your journal…</p>}
