@@ -152,6 +152,150 @@ export const SUGGESTION_PROMPTS: Record<SuggestionCategory, string[]> = {
   ],
 };
 
+// Versión en español. No son traducciones literales: se busca que suenen como
+// las escribiría alguien aquí, porque son ejemplos de lo que la usuaria teclearía.
+export const SUGGESTION_PROMPTS_ES: Record<SuggestionCategory, string[]> = {
+  mood: [
+    "Sorpréndeme esta noche",
+    "Necesito una peli reconfortante",
+    "Solo quiero reírme",
+    "Quiero llorar a gusto",
+    "Estoy de nostalgia",
+    "Vengo reventada",
+    "No puedo dejar de darle vueltas",
+    "Necesito evadirme",
+    "Anímame",
+    "Quiero que algo me remueva",
+    "Quiero mariposas en el estómago",
+    "Ponme los pelos de punta",
+    "Vuélame la cabeza",
+    "No quiero pensar",
+    "Elige tú por mí",
+    "Recomiéndame mi próxima obsesión",
+    "Quiero un final feliz",
+    "Necesito algo de esperanza",
+    "Algo que me destroce por dentro",
+    "Quiero salir inspirada",
+  ],
+  similar: [
+    "Algo como Harry Potter",
+    "Algo como Interstellar",
+    "Algo como La La Land",
+    "Algo como Dune",
+    "Algo como Puñales por la espalda",
+    "Algo como The Bear",
+    "Algo como Fleabag",
+    "Algo como Severance",
+    "Algo como Shrek",
+    "Algo como Todo a la vez en todas partes",
+    "Algo como El viaje de Chihiro",
+    "Algo como The Office",
+    "Algo como Succession",
+    "Algo como Las chicas Gilmore",
+    "Algo como El castillo ambulante",
+  ],
+  trope: [
+    "De enemigos a amantes",
+    "De amigos a algo más",
+    "Solo queda una cama",
+    "Una pareja que finge salir",
+    "Un amor que va muy poco a poco",
+    "Una segunda oportunidad",
+    "Una familia elegida",
+    "El gruñón y la alegre",
+    "Los polos opuestos se atraen",
+    "Un amor prohibido",
+    "Un triángulo amoroso complicado",
+    "Un matrimonio de conveniencia",
+    "Almas gemelas que se encuentran",
+    "Personajes moralmente ambiguos",
+    "Un antihéroe inolvidable",
+    "Una protagonista con carácter",
+    "Un bucle temporal",
+    "Viajes en el tiempo que descolocan",
+    "Caos de universos paralelos",
+    "Una historia de crecer de golpe",
+    "Un viaje por carretera inolvidable",
+    "Un misterio de quién lo hizo",
+    "Un narrador poco fiable",
+    "Un atraco que sale mal",
+    "Encanto de pueblo pequeño",
+  ],
+  situation: [
+    "Algo para una primera cita",
+    "Noche de peli con amigas",
+    "Algo para ver con mis padres",
+    "Una peli que guste a toda la familia",
+    "Algo para un domingo de lluvia",
+    "Una peli tranquila antes de dormir",
+    "Un maratón de madrugada",
+    "Algo para una tarde de vaguear",
+    "Una peli para un vuelo largo",
+    "Una serie para ventilarme el finde",
+    "La peli perfecta para ver sola",
+    "Algo que le guste a todo el mundo",
+    "Una peli para una noche tranquila",
+    "Algo fácil para un domingo",
+    "Algo reconfortante al salir de trabajar",
+  ],
+  vibe: [
+    "Rollo otoño y manta",
+    "Un romance de verano perfecto",
+    "Una peli de invierno para acurrucarse",
+    "Estética dark academia",
+    "Rollo cottagecore",
+    "Energía de protagonista",
+    "Una peli para desconectar el cerebro",
+    "Fotografía de ensueño",
+    "Ciudad de noche y neones",
+    "Serotonina pura",
+    "Imágenes preciosas",
+    "Una banda sonora inolvidable",
+    "Cine con mayúsculas",
+    "Cero pensamientos, solo vibras",
+    "Algo rodado con mucho gusto",
+  ],
+  genre: [
+    "Ciencia ficción que descoloque",
+    "Un thriller psicológico",
+    "Una comedia inteligente",
+    "Una aventura épica de fantasía",
+    "Una comedia romántica",
+    "Un misterio con asesinato",
+    "Un drama criminal que enganche",
+    "Una obra maestra de animación",
+    "Una de terror para esta noche",
+    "Una aventura de acción sin tregua",
+    "Un documental infravalorado",
+    "Una aventura fantástica",
+    "Un drama de juicios",
+    "Una aventura espacial",
+    "Una de apocalipsis zombi",
+  ],
+  wildcard: [
+    "Algo que merezca el hype",
+    "Una joya escondida",
+    "Una interpretación de Óscar",
+    "Una película de culto",
+    "Una peli que no olvidaré",
+    "El primer episodio perfecto",
+    "Solo un episodio más",
+    "¿Qué acabo de ver?",
+    "Una peli que se te queda dentro",
+    "Algo con rollo A24",
+    "Rollo Studio Ghibli",
+    "Rollo Christopher Nolan",
+    "Estética Wes Anderson",
+    "Energía Black Mirror",
+    "Algo que me deje tocada",
+    "Una peli con un final de locos",
+    "Nada de superhéroes esta noche",
+    "Sin romance, por favor",
+    "Nada de terror esta noche",
+    "Algo ligerito para hoy",
+  ],
+};
+
 function pickRandom<T>(arr: T[], exclude: Set<string>): T | null {
   const pool = arr.filter((v) => !exclude.has(String(v)));
   if (!pool.length) return null;
@@ -163,7 +307,8 @@ function pickRandom<T>(arr: T[], exclude: Set<string>): T | null {
  * Slots: 1 mood, 1 trope, 1 similar, 1 from {situation, genre, vibe, wildcard}.
  * `exclude` lets the refresh button avoid repeating currently-visible prompts.
  */
-export function pickSuggestions(exclude: string[] = []): string[] {
+export function pickSuggestions(exclude: string[] = [], lang: "en" | "es" = "en"): string[] {
+  const BANCO = lang === "es" ? SUGGESTION_PROMPTS_ES : SUGGESTION_PROMPTS;
   const used = new Set(exclude);
   const result: string[] = [];
 
@@ -188,13 +333,13 @@ export function pickSuggestions(exclude: string[] = []): string[] {
   for (const preferences of slots) {
     let pick: string | null = null;
     for (const cat of preferences) {
-      pick = pickRandom(SUGGESTION_PROMPTS[cat], used);
+      pick = pickRandom(BANCO[cat], used);
       if (pick) break;
     }
     // Fallback: any category with something left.
     if (!pick) {
       for (const cat of shuffle(allCats)) {
-        pick = pickRandom(SUGGESTION_PROMPTS[cat], used);
+        pick = pickRandom(BANCO[cat], used);
         if (pick) break;
       }
     }

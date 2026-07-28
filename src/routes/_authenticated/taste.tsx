@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getTasteStats, getCharacterTwin } from "@/lib/feedback.functions";
 import { AppShell } from "@/components/AppShell";
+import { useLang } from "@/hooks/use-lang";
 import { EmptyState } from "@/components/EmptyState";
 import { BarChart2, Wand2, Sparkles } from "lucide-react";
 import mascotExcited from "@/assets/mascot-excited.png";
@@ -46,6 +47,7 @@ function BarRow({ label, count, max }: { label: string; count: number; max: numb
 }
 
 function TastePage() {
+  const { t } = useLang();
   const getStatsFn = useServerFn(getTasteStats);
   const getTwinFn = useServerFn(getCharacterTwin);
   const { data, isLoading } = useQuery({
@@ -68,7 +70,7 @@ function TastePage() {
     <AppShell width="wide">
       <div className="pt-7 pb-6 flex items-center gap-[0.3em] text-[2rem] sm:text-[2.75rem]">
         <h1 className="text-[1em] leading-[1.02] font-display text-balance min-w-0">
-          Your <span className="italic text-primary">taste.</span>
+          {t("yourTaste")} <span className="italic text-primary">{t("yourTasteEm")}</span>
         </h1>
         <img src={mascotExcited} alt="" width={112} height={112} loading="lazy" className="h-[1.75em] w-auto shrink-0" />
       </div>
@@ -86,9 +88,9 @@ function TastePage() {
       {isEmpty && (
         <EmptyState
           mascotSrc={mascotExcited}
-          title="The notebook is still blank."
-          subtitle="Rate a screening or two and the projectionist will start keeping notes."
-          action={{ to: "/", label: "Book tonight's screening" }}
+          title={t("tasteEmptyTitle")}
+          subtitle={t("tasteEmptySub")}
+          action={{ to: "/", label: t("bookScreening") }}
         />
       )}
 
@@ -96,27 +98,27 @@ function TastePage() {
         <div className="mt-2 space-y-5 lg:space-y-0 lg:columns-2 lg:gap-5 [&>*]:lg:mb-5 [&>*]:lg:break-inside-avoid">
           <div className="grid grid-cols-2 gap-3">
             <StatCard
-              label="Match accuracy"
+              label={t("matchAccuracy")}
               value={`${data.accuracy}%`}
-              sub={`${data.feedbackCounts.total} ratings`}
+              sub={`${data.feedbackCounts.total} ${t("ratings")}`}
             />
             <StatCard
-              label="Loved"
+              label={t("loved")}
               value={data.feedbackCounts.love_it}
-              sub={`${data.feedbackCounts.like_it} liked · ${data.feedbackCounts.not_for_me} skipped`}
+              sub={t("likedSkipped").replace("{n}", String(data.feedbackCounts.not_for_me)).replace(/^/, `${data.feedbackCounts.like_it} `)}
             />
           </div>
 
           {data.feedbackCounts.total > 0 && (
             <div className="bg-card rounded-2xl elegant-border p-4 space-y-3 shadow-sm">
               <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-bold">
-                Your reactions
+                {t("yourReactions")}
               </p>
               <div className="flex gap-2">
                 {[
-                  { icon: <span className="text-xl">❤️</span>, label: "Love it", count: data.feedbackCounts.love_it },
-                  { icon: <span className="text-xl">👍</span>, label: "Like it", count: data.feedbackCounts.like_it },
-                  { icon: <span className="text-xl">👎</span>, label: "Not for me", count: data.feedbackCounts.not_for_me },
+                  { icon: <span className="text-xl">❤️</span>, label: t("loveIt"), count: data.feedbackCounts.love_it },
+                  { icon: <span className="text-xl">👍</span>, label: t("likeIt"), count: data.feedbackCounts.like_it },
+                  { icon: <span className="text-xl">👎</span>, label: t("notForMe"), count: data.feedbackCounts.not_for_me },
                 ].map(({ icon, label, count }) => (
                   <div
                     key={label}
@@ -134,7 +136,7 @@ function TastePage() {
           {data.topGenres.length > 0 && (
             <div className="bg-card rounded-2xl elegant-border p-4 space-y-3 shadow-sm">
               <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-bold">
-                Favorite genres
+                {t("favoriteGenres")}
               </p>
               <div className="space-y-3">
                 {data.topGenres.slice(0, 5).map(({ genre, count }) => (
@@ -152,7 +154,7 @@ function TastePage() {
           {data.releasePeriods.length > 0 && (
             <div className="bg-card rounded-2xl elegant-border p-4 space-y-3 shadow-sm">
               <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-bold">
-                Preferred era
+                {t("preferredEra")}
               </p>
               <div className="space-y-3">
                 {data.releasePeriods.slice(0, 5).map(({ period, count }) => (
@@ -170,7 +172,7 @@ function TastePage() {
           {data.mostLiked.length > 0 && (
             <div className="bg-card rounded-2xl elegant-border p-4 space-y-3 shadow-sm">
               <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-bold">
-                Most liked picks
+                {t("mostLikedPicks")}
               </p>
               <ul className="space-y-2">
                 {data.mostLiked.slice(0, 5).map(({ title, genre, reaction }) => (
@@ -193,22 +195,22 @@ function TastePage() {
 
           <div className="bg-secondary text-secondary-foreground rounded-2xl elegant-border p-5 space-y-2 shadow-sm">
             <p className="text-[10px] uppercase tracking-[0.2em] font-bold flex items-center gap-1.5">
-              <Wand2 size={14} /> Your character twin
+              <Wand2 size={14} /> {t("characterTwin")}
             </p>
-            {twinLoading && <p className="text-sm opacity-80 italic">Leafing through the archive…</p>}
+            {twinLoading && <p className="text-sm opacity-80 italic">{t("twinLoading")}</p>}
             {!twinLoading && !twin && (
-              <p className="text-sm opacity-80">Rate a few more screenings and this page will fill in.</p>
+              <p className="text-sm opacity-80">{t("twinEmpty")}</p>
             )}
             {twin && (
               <>
                 <p className="text-3xl font-display leading-tight">{twin.name}</p>
-                {twin.source && <p className="text-sm font-semibold opacity-80">from {twin.source}</p>}
+                {twin.source && <p className="text-sm font-semibold opacity-80">{t("twinFrom")} {twin.source}</p>}
                 {twin.why && <p className="text-sm mt-1 leading-snug">{twin.why}</p>}
 
                 {twin.shared.length > 0 && (
                   <div className="mt-4 pt-4 border-t border-current/15 space-y-3">
                     <p className="text-[10px] uppercase tracking-[0.2em] font-bold opacity-70">
-                      They'd watch these with you
+                      {t("twinWouldWatch")}
                     </p>
                     {twin.shared.map((s) => (
                       <div key={s.title}>
@@ -225,7 +227,7 @@ function TastePage() {
           {data.topMoods.length > 0 && (
             <div className="bg-card rounded-2xl elegant-border p-4 space-y-3 shadow-sm">
               <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-bold">
-                Preferred moods
+                {t("preferredMoods")}
               </p>
               <div className="flex flex-wrap gap-2">
                 {data.topMoods.slice(0, 8).map(({ mood, count }) => (
@@ -243,7 +245,7 @@ function TastePage() {
           {data.topDirectors.length > 0 && (
             <div className="bg-card rounded-2xl elegant-border p-4 space-y-3 shadow-sm">
               <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-bold">
-                Favorite directors
+                {t("favoriteDirectors")}
               </p>
               <ul className="space-y-1.5">
                 {data.topDirectors.slice(0, 5).map(({ name, count }) => (
@@ -259,7 +261,7 @@ function TastePage() {
           {data.topActors.length > 0 && (
             <div className="bg-card rounded-2xl elegant-border p-4 space-y-3 shadow-sm">
               <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-bold">
-                Favorite actors
+                {t("favoriteActors")}
               </p>
               <div className="flex flex-wrap gap-2">
                 {data.topActors.slice(0, 8).map(({ name, count }) => (

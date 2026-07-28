@@ -3,7 +3,9 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { listHistory, deleteHistory } from "@/lib/history.functions";
 import { listFeedback, submitFeedback, type Reaction } from "@/lib/feedback.functions";
+import type { Key } from "@/lib/i18n";
 import { AppShell } from "@/components/AppShell";
+import { useLang } from "@/hooks/use-lang";
 import { EmptyState } from "@/components/EmptyState";
 import { ListSkeleton } from "@/components/Skeleton";
 import { Clock, Film, Trash2 } from "lucide-react";
@@ -26,13 +28,14 @@ function formatDate(iso: string) {
   return d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
 }
 
-const REACTIONS: { reaction: Reaction; emoji: string; label: string }[] = [
-  { reaction: "love_it", emoji: "❤️", label: "Love it" },
-  { reaction: "like_it", emoji: "👍", label: "Like it" },
-  { reaction: "not_for_me", emoji: "👎", label: "Not for me" },
-];
+const REACTIONS = [
+  { reaction: "love_it", emoji: "❤️", key: "loveIt" },
+  { reaction: "like_it", emoji: "👍", key: "likeIt" },
+  { reaction: "not_for_me", emoji: "👎", key: "notForMe" },
+] as const satisfies readonly { reaction: Reaction; emoji: string; key: Key }[];
 
 function HistoryPage() {
+  const { t } = useLang();
   const listFn = useServerFn(listHistory);
   const delFn = useServerFn(deleteHistory);
   const listFeedbackFn = useServerFn(listFeedback);
@@ -57,7 +60,7 @@ function HistoryPage() {
     mutationFn: (id: string) => delFn({ data: { id } }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["history"] });
-      toast.success("Removed");
+      toast.success(t("removed"));
     },
   });
 
@@ -68,14 +71,14 @@ function HistoryPage() {
       qc.invalidateQueries({ queryKey: ["feedback"] });
       qc.invalidateQueries({ queryKey: ["tasteStats"] });
     },
-    onError: () => toast.error("Couldn't save feedback"),
+    onError: () => toast.error(t("feedbackFailed")),
   });
 
   return (
     <AppShell width="wide">
       <div className="pt-7 pb-6 flex items-center gap-[0.3em] text-[2rem] sm:text-[2.75rem]">
         <h1 className="text-[1em] leading-[1.02] font-display text-balance min-w-0">
-          <span className="italic text-primary">Archive.</span>
+          <span className="italic text-primary">{t("archive")}</span>
         </h1>
         <img src={mascotSleepy} alt="" width={112} height={112} loading="lazy" className="h-[1.75em] w-auto shrink-0" />
       </div>
@@ -85,9 +88,9 @@ function HistoryPage() {
       {!isLoading && (!data || data.length === 0) && (
         <EmptyState
           mascotSrc={mascotSad}
-          title="The archive is quiet."
-          subtitle="Once the projector rolls, every screening will be catalogued here."
-          action={{ to: "/", label: "Open tonight's screening" }}
+          title={t("histEmptyTitle")}
+          subtitle={t("histEmptySub")}
+          action={{ to: "/", label: t("openScreening") }}
         />
       )}
 
@@ -109,7 +112,7 @@ function HistoryPage() {
                   <button
                     onClick={() => del.mutate(h.id)}
                     className="group absolute right-0 top-0 p-3 -mt-1.5 -mr-1.5 sm:p-1.5 sm:mt-0 sm:mr-0 rounded-full hover:bg-muted text-muted-foreground hover:text-destructive transition btn-lift"
-                    aria-label="Remove"
+                    aria-label={t("remove")}
                   >
                     <Trash2 size={16} className="btn-icon" />
                   </button>
@@ -123,7 +126,7 @@ function HistoryPage() {
                   </p>
                 )}
                 <div className="inline-flex gap-1 mt-3 bg-background rounded-full p-1 elegant-border-sm">
-                  {REACTIONS.map(({ reaction, emoji, label }) => {
+                  {REACTIONS.map(({ reaction, emoji, key }) => {
                     const active = currentReaction === reaction;
                     return (
                       <button
@@ -131,8 +134,8 @@ function HistoryPage() {
                         onClick={() =>
                           react.mutate({ historyId: h.id, title: h.title, genre: h.genre, year: h.year, reaction })
                         }
-                        title={label}
-                        aria-label={label}
+                        title={t(key)}
+                        aria-label={t(key)}
                         className={`group text-base px-3.5 py-2.5 sm:px-2.5 sm:py-1 rounded-full transition btn-lift ${
                           active ? "bg-primary text-primary-foreground" : "hover:bg-muted"
                         }`}

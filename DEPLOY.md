@@ -57,6 +57,15 @@ npm run build
 npx wrangler deploy --config .output/server/wrangler.json --name tonights-pick
 ```
 
+Si el despliegue falla con `Can't set compatibility date in the future`, es que
+nitro ha puesto la fecha de hoy en tu huso y los servidores de Cloudflare aún
+van por ayer. Se resuelve pasando la fecha a mano:
+
+```bash
+npx wrangler deploy --config .output/server/wrangler.json --name tonights-pick \
+  --compatibility-date $(date -u -v-1d +%Y-%m-%d)
+```
+
 Publicada en **https://tonights-pick.norahmartinn.workers.dev**
 
 El `--name` es necesario porque nitro genera el Worker con el nombre por defecto

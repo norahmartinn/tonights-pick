@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import mascotHero from "@/assets/mascot-hero-cool.png";
+import { useLang } from "@/hooks/use-lang";
 
 export const Route = createFileRoute("/auth")({
   validateSearch: (s: Record<string, unknown>) => ({
@@ -18,6 +19,7 @@ export const Route = createFileRoute("/auth")({
 });
 
 function AuthPage() {
+  const { t, lang, toggle: cambiarIdioma } = useLang();
   const navigate = useNavigate();
   const { next } = Route.useSearch();
   const safeNext = next && next.startsWith("/") && !next.startsWith("//") ? next : "";
@@ -48,7 +50,7 @@ function AuthPage() {
           },
         });
         if (error) throw error;
-        toast.success("Welcome to Tonight!");
+        toast.success(t("welcomeToast"));
         window.location.href = returnTo;
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -57,7 +59,7 @@ function AuthPage() {
         window.location.href = returnTo;
       }
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Authentication failed");
+      toast.error(err instanceof Error ? err.message : t("authFailed"));
     } finally {
       setLoading(false);
     }
@@ -73,13 +75,24 @@ function AuthPage() {
       options: { redirectTo: window.location.origin + returnTo },
     });
     if (error) {
-      toast.error("Google sign-in failed — enable the Google provider in Supabase.");
+      toast.error(t("googleFailed"));
       setLoading(false);
     }
   }
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-6">
+    <div className="min-h-screen bg-background flex items-center justify-center p-6 relative">
+      {/* Antes de entrar también hay que poder elegir idioma: esta es la
+          primera pantalla que ve cualquiera. */}
+      <button
+        type="button"
+        onClick={cambiarIdioma}
+        className="absolute top-5 right-5 px-3 py-2.5 rounded-2xl text-muted-foreground hover:text-foreground hover:bg-muted/70 transition-colors text-xs font-bold tracking-wide btn-lift"
+        aria-label={lang === "es" ? t("switchToEn") : t("switchToEs")}
+        title={lang === "es" ? t("switchToEn") : t("switchToEs")}
+      >
+        {lang === "es" ? "EN" : "ES"}
+      </button>
       <div className="w-full max-w-md">
         <Link to="/auth" className="block text-center mb-20 sm:mb-24">
           <h1 className="text-[2.5rem] sm:text-5xl font-display tracking-tight text-balance">
@@ -97,12 +110,12 @@ function AuthPage() {
           />
         <div className="bg-card text-card-foreground rounded-3xl p-8 elegant-border relative shadow-sm">
           <h2 className="text-2xl font-display mb-1">
-            {mode === "signin" ? "Welcome back" : "Join Tonight"}
+            {mode === "signin" ? t("welcomeBack") : t("joinTonight")}
           </h2>
           <p className="text-muted-foreground mb-6 text-sm">
             {mode === "signin"
-              ? "Sign in to save your picks."
-              : "Create an account to save your picks."}
+              ? t("signInToSave")
+              : t("createToSave")}
           </p>
 
           <button
@@ -111,12 +124,12 @@ function AuthPage() {
             disabled={loading}
             className="w-full mb-4 flex items-center justify-center gap-3 bg-card text-foreground py-3 rounded-full elegant-border-sm font-semibold hover:bg-muted transition disabled:opacity-50 pressable"
           >
-            <GoogleIcon /> Continue with Google
+            <GoogleIcon /> {t("continueGoogle")}
           </button>
 
           <div className="flex items-center gap-3 my-4 text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
             <div className="flex-1 h-px bg-border opacity-30" />
-            or
+            {t("or")}
             <div className="flex-1 h-px bg-border opacity-30" />
           </div>
 
@@ -125,7 +138,7 @@ function AuthPage() {
               <input
                 type="text"
                 required
-                placeholder="Your name"
+                placeholder={t("yourName")}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 className="w-full px-4 py-3 rounded-2xl bg-input text-foreground placeholder:text-muted-foreground/70 elegant-border-sm focus:outline-none focus:ring-2 focus:ring-curtain/30"
@@ -134,7 +147,7 @@ function AuthPage() {
             <input
               type="email"
               required
-              placeholder="Email"
+              placeholder={t("email")}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="w-full px-4 py-3 rounded-2xl bg-input text-foreground placeholder:text-muted-foreground/70 elegant-border-sm focus:outline-none focus:ring-2 focus:ring-curtain/30"
@@ -143,7 +156,7 @@ function AuthPage() {
               type="password"
               required
               minLength={6}
-              placeholder="Password"
+              placeholder={t("password")}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="w-full px-4 py-3 rounded-2xl bg-input text-foreground placeholder:text-muted-foreground/70 elegant-border-sm focus:outline-none focus:ring-2 focus:ring-curtain/30"
@@ -153,18 +166,18 @@ function AuthPage() {
               disabled={loading}
               className="w-full bg-primary text-primary-foreground py-3 rounded-full elegant-border-sm font-bold text-lg hover:brightness-105 transition disabled:opacity-50 pressable"
             >
-              {loading ? "..." : mode === "signin" ? "Sign in" : "Create account"}
+              {loading ? "..." : mode === "signin" ? t("signIn") : t("createAccount")}
             </button>
           </form>
 
           <div className="mt-5 flex items-center justify-center gap-2 text-sm text-muted-foreground">
-            <span>{mode === "signin" ? "New here?" : "Already have an account?"}</span>
+            <span>{mode === "signin" ? t("newHere") : t("alreadyAccount")}</span>
             <button
               type="button"
               onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
               className="font-semibold text-foreground underline-offset-2 hover:underline py-2.5 px-1"
             >
-              {mode === "signin" ? "Create an account" : "Sign in"}
+              {mode === "signin" ? t("createAccount") : t("signIn")}
             </button>
           </div>
         </div>

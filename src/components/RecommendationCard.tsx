@@ -1,12 +1,14 @@
 import type { Recommendation } from "@/lib/recommend.functions";
 import { Star, Film, Tv } from "lucide-react";
+import { useLang } from "@/hooks/use-lang";
 
 export function RecommendationCard({ rec }: { rec: Recommendation }) {
+  const { t } = useLang();
   return (
     <article className="bg-card text-card-foreground rounded-3xl elegant-border overflow-hidden shadow-sm animate-fade-in-up">
       <div className="flex items-center px-5 pt-4 pb-3 border-b border-ink/8">
         <p className="text-[10px] uppercase tracking-[0.3em] text-curtain font-bold">
-          Tonight's Feature
+          {t("tonightsFeature")}
         </p>
       </div>
       {/* En móvil el póster manda y va arriba; a partir de md se pone a un lado
@@ -32,7 +34,7 @@ export function RecommendationCard({ rec }: { rec: Recommendation }) {
           {rec.media_type ? (
             <span className="bg-card/95 text-card-foreground text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full elegant-border-sm inline-flex items-center gap-1">
               {rec.media_type === "tv" ? <Tv size={11} /> : <Film size={11} />}
-              {rec.media_type === "tv" ? "TV show" : "Movie"}
+              {rec.media_type === "tv" ? t("kindTv") : t("kindMovie")}
             </span>
           ) : (
             <span />
@@ -65,7 +67,7 @@ export function RecommendationCard({ rec }: { rec: Recommendation }) {
         <p className="text-sm leading-relaxed text-foreground/90">{rec.description}</p>
 
         <div className="bg-accent/40 text-accent-foreground rounded-2xl p-4 elegant-border-sm">
-          <p className="text-[10px] font-bold uppercase tracking-widest mb-1.5 text-ink/70">Why tonight</p>
+          <p className="text-[10px] font-bold uppercase tracking-widest mb-1.5 text-ink/70">{t("whyTonight")}</p>
           <p className="text-sm leading-relaxed italic font-display">{rec.reason}</p>
         </div>
       </div>

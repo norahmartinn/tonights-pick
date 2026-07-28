@@ -7,6 +7,8 @@ const RecInput = z.object({
   prompt: z.string().min(2).max(500),
   exclude: z.array(z.string()).max(20).optional(),
   kind: z.enum(["any", "movie", "tv"]).optional(),
+  /** Idioma de la interfaz: el texto generado debe salir en el mismo. */
+  lang: z.enum(["en", "es"]).optional(),
 });
 
 export type Recommendation = {
@@ -67,6 +69,12 @@ export const recommend = createServerFn({ method: "POST" })
       // non-blocking — continue without taste context
     }
 
+    // Sin esto la ficha sale en inglés aunque la interfaz esté en español.
+    const idiomaSalida =
+      data.lang === "es"
+        ? '\n\nIMPORTANT: write "description", "reason" and "mood" in SPANISH (España). Keep "title" in its original language and "platform" as the service name.'
+        : '\n\nIMPORTANT: write "description", "reason" and "mood" in ENGLISH.';
+
     const system = `You are Tonight, a witty movie & TV recommender. Always return ONE single, specific real title (movie or show) that exists. Prefer well-known titles available on major streaming platforms. Respond ONLY as compact JSON matching this schema:
 {
   "title": string,
@@ -81,7 +89,7 @@ export const recommend = createServerFn({ method: "POST" })
   "director": string,              // primary director (or showrunner for TV); "" if unknown
   "cast_members": string           // up to 3 lead actors, comma separated; "" if unknown
 }
-No markdown, no commentary.${tasteContext}`;
+No markdown, no commentary.${idiomaSalida}${tasteContext}`;
 
     const exclude = data.exclude?.length
       ? `\nDo NOT recommend any of these (already shown): ${data.exclude.join(", ")}.`
@@ -215,7 +223,7 @@ No markdown, no commentary.${tasteContext}`;
       if (segundo?.title && titulosPermitidos.has(segundo.title.toLowerCase())) parsed = segundo;
     }
 
-    let tmdb = await findTitle(parsed.title ?? "", parsed.year, data.kind, pais).catch(() => null);
+    let tmdb = await findTitle(parsed.title ?? "", parsed.year, data.kind, pais, data.lang ?? "en").catch(() => null);
 
     // Si TMDB no lo encuentra, lo más probable es que el modelo se lo haya
     // inventado (pasa sobre todo con peticiones de nicho). Una segunda
@@ -224,7 +232,7 @@ No markdown, no commentary.${tasteContext}`;
       const fantasma = parsed.title;
       const segundo = await pedirTitulo([fantasma]).catch(() => null);
       if (segundo?.title) {
-        const verificado = await findTitle(segundo.title, segundo.year, data.kind, pais).catch(() => null);
+        const verificado = await findTitle(segundo.title, segundo.year, data.kind, pais, data.lang ?? "en").catch(() => null);
         if (verificado) {
           parsed = segundo;
           tmdb = verificado;

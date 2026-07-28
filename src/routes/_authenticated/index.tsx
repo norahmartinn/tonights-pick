@@ -5,6 +5,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { Sparkles, Heart, RefreshCw, Film, Tv, Shuffle, Dice5 } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
+import { useLang } from "@/hooks/use-lang";
 import { RecommendationCard } from "@/components/RecommendationCard";
 import { FeedbackButtons } from "@/components/FeedbackButtons";
 import { ProjectorLoader } from "@/components/ProjectorLoader";
@@ -26,6 +27,7 @@ export const Route = createFileRoute("/_authenticated/")({
 });
 
 function HomePage() {
+  const { t, lang } = useLang();
   const [prompt, setPrompt] = useState("");
   const [rec, setRec] = useState<Recommendation | null>(null);
   const [shown, setShown] = useState<string[]>([]);
@@ -34,12 +36,13 @@ function HomePage() {
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [suggestKey, setSuggestKey] = useState(0);
 
+  // Al cambiar de idioma hay que rehacerlas: si no, seguirían en el anterior.
   useEffect(() => {
-    setSuggestions(pickSuggestions());
-  }, []);
+    setSuggestions(pickSuggestions([], lang));
+  }, [lang]);
 
   function refreshSuggestions() {
-    setSuggestions((prev) => pickSuggestions(prev));
+    setSuggestions((prev) => pickSuggestions(prev, lang));
     setSuggestKey((k) => k + 1);
   }
 
@@ -49,7 +52,8 @@ function HomePage() {
 
   const m = useMutation({
     mutationFn: (p: { prompt: string; exclude: string[]; kind: "any" | "movie" | "tv" }) =>
-      recommendFn({ data: p }),
+      // el idioma va en cada petición: la ficha debe salir en el que se está viendo
+      recommendFn({ data: { ...p, lang } }),
     onSuccess: (r) => {
       setRec(r);
       setShown((prev) => [...prev, r.title]);
@@ -79,7 +83,7 @@ function HomePage() {
     onSuccess: () => {
       setSavedTitle(rec?.title ?? null);
       qc.invalidateQueries({ queryKey: ["favorites"] });
-      toast.success("Saved to favorites");
+      toast.success(t("savedToFavorites"));
     },
     onError: (err) => toast.error(err instanceof Error ? err.message : "Could not save"),
   });
@@ -103,8 +107,8 @@ function HomePage() {
         <div className="flex items-center justify-between gap-2 mb-5">
           <div className="flex-1 min-w-0 pt-1">
             <h1 className="text-[2rem] sm:text-[2.5rem] leading-[1.25] font-display text-balance">
-              What are you in the{" "}
-              <span className="italic bg-primary text-primary-foreground box-decoration-clone px-0">mood for?</span>
+              {t("moodQuestionPre")}{" "}
+              <span className="italic bg-primary text-primary-foreground box-decoration-clone px-0">{t("moodQuestionEm")}</span>
             </h1>
           </div>
           <img
@@ -124,7 +128,7 @@ function HomePage() {
               <div className="flex items-center gap-3 pt-2">
                 <span className="h-px flex-1 bg-ink/15" />
                 <p className="text-[10px] uppercase tracking-[0.35em] text-curtain font-bold">
-                  Now Showing
+                  {t("nowShowing")}
                 </p>
                 <span className="h-px flex-1 bg-ink/15" />
               </div>
@@ -146,7 +150,7 @@ function HomePage() {
                   className="group bg-card text-card-foreground font-bold py-3 sm:py-3.5 px-3 rounded-full elegant-border-sm flex items-center justify-center gap-1.5 sm:gap-2 text-sm sm:text-base whitespace-nowrap disabled:opacity-60 hover:bg-muted btn-lift"
                 >
                   <Heart size={16} fill={savedTitle === rec.title ? "currentColor" : "none"} className="btn-icon shrink-0" />
-                  <span className="truncate">{savedTitle === rec.title ? "In collection" : "Save"}</span>
+                  <span className="truncate">{savedTitle === rec.title ? t("inCollection") : t("save")}</span>
                 </button>
                 <button
                   onClick={another}
@@ -154,7 +158,7 @@ function HomePage() {
                   className="group bg-secondary text-secondary-foreground font-bold py-3 sm:py-3.5 px-3 rounded-full elegant-border-sm flex items-center justify-center gap-1.5 sm:gap-2 text-sm sm:text-base whitespace-nowrap disabled:opacity-50 hover:brightness-105 btn-lift"
                 >
                   <RefreshCw size={16} className={`btn-icon shrink-0 ${m.isPending ? "animate-spin" : ""}`} />
-                  <span className="truncate">Another one</span>
+                  <span className="truncate">{t("anotherOne")}</span>
                 </button>
               </div>
             </section>
@@ -167,22 +171,22 @@ function HomePage() {
               className="bg-card rounded-3xl elegant-border p-2.5 shadow-sm"
             >
               <p className="px-3.5 pt-2 pb-1 text-xs font-bold uppercase tracking-[0.15em] text-muted-foreground">
-                Ask for something else
+                {t("askSomethingElse")}
               </p>
               <textarea
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}
-                placeholder="e.g. Something darker, a documentary, a show like this but funnier…"
+                placeholder={t("promptPlaceholderAgain")}
                 rows={2}
                 maxLength={280}
                 className="w-full bg-transparent resize-none px-3.5 py-2 text-base placeholder:text-muted-foreground/80 focus:outline-none"
               />
               <div className="grid grid-cols-3 gap-2 px-1 pb-2">
                 {([
-                  { k: "any", label: "Any", Icon: Shuffle },
-                  { k: "movie", label: "Movie", Icon: Film },
-                  { k: "tv", label: "TV show", Icon: Tv },
-                ] as const).map(({ k, label, Icon }) => {
+                  { k: "any", key: "kindAny", Icon: Shuffle },
+                  { k: "movie", key: "kindMovie", Icon: Film },
+                  { k: "tv", key: "kindTv", Icon: Tv },
+                ] as const).map(({ k, key, Icon }) => {
                   const active = kind === k;
                   return (
                     <button
@@ -196,7 +200,7 @@ function HomePage() {
                       }`}
                       aria-pressed={active}
                     >
-                      <Icon size={14} strokeWidth={2.5} className="btn-icon" /> {label}
+                      <Icon size={14} strokeWidth={2.5} className="btn-icon" /> {t(key)}
                     </button>
                   );
                 })}
@@ -208,11 +212,11 @@ function HomePage() {
               >
                 {m.isPending ? (
                   <>
-                    <RefreshCw size={18} className="animate-spin" /> Preparing your screening…
+                    <RefreshCw size={18} className="animate-spin" /> {t("preparingScreening")}
                   </>
                 ) : (
                   <>
-                    <Sparkles size={18} className="btn-icon" /> Screen something for me
+                    <Sparkles size={18} className="btn-icon" /> {t("screenSomething")}
                   </>
                 )}
               </button>
@@ -231,17 +235,17 @@ function HomePage() {
                 <textarea
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
-                  placeholder="e.g. A feel-good movie for a rainy Sunday, a smart comedy, something like Harry Potter…"
+                  placeholder={t("promptPlaceholder")}
                   rows={3}
                   maxLength={280}
                   className="w-full bg-transparent resize-none px-3.5 py-3 text-base placeholder:text-muted-foreground/80 focus:outline-none"
                 />
                 <div className="grid grid-cols-3 gap-2 px-1 pb-2">
                   {([
-                    { k: "any", label: "Any", Icon: Shuffle },
-                    { k: "movie", label: "Movie", Icon: Film },
-                    { k: "tv", label: "TV show", Icon: Tv },
-                  ] as const).map(({ k, label, Icon }) => {
+                    { k: "any", key: "kindAny", Icon: Shuffle },
+                    { k: "movie", key: "kindMovie", Icon: Film },
+                    { k: "tv", key: "kindTv", Icon: Tv },
+                  ] as const).map(({ k, key, Icon }) => {
                     const active = kind === k;
                     return (
                     <button
@@ -255,7 +259,7 @@ function HomePage() {
                       }`}
                       aria-pressed={active}
                     >
-                      <Icon size={14} strokeWidth={2.5} className="btn-icon" /> {label}
+                      <Icon size={14} strokeWidth={2.5} className="btn-icon" /> {t(key)}
                     </button>
                     );
                   })}
@@ -267,11 +271,11 @@ function HomePage() {
                 >
                   {m.isPending ? (
                     <>
-                      <RefreshCw size={18} className="animate-spin" /> Preparing your screening…
+                      <RefreshCw size={18} className="animate-spin" /> {t("preparingScreening")}
                     </>
                   ) : (
                     <>
-                      <Sparkles size={18} className="btn-icon" /> Screen something for me
+                      <Sparkles size={18} className="btn-icon" /> {t("screenSomething")}
                     </>
                   )}
                 </button>
@@ -281,14 +285,14 @@ function HomePage() {
             <div className="mt-6">
               <div className="flex items-center justify-between mb-3">
                 <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-bold">
-                  Try one of these
+                  {t("tryOneOfThese")}
                 </p>
                 <button
                   type="button"
                   onClick={refreshSuggestions}
                   className="group p-3 sm:p-2 rounded-full hover:bg-muted text-muted-foreground hover:text-foreground transition btn-lift"
-                  aria-label="Shuffle the notes"
-                  title="A different set of notes"
+                  aria-label={t("shuffleNotes")}
+                  title={t("differentNotes")}
                 >
                   <Dice5 size={18} className="btn-icon" />
                 </button>

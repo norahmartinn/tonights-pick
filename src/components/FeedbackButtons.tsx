@@ -3,6 +3,8 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { submitFeedback, type Reaction } from "@/lib/feedback.functions";
+import { useLang } from "@/hooks/use-lang";
+import type { Key } from "@/lib/i18n";
 
 type Props = {
   historyId: string;
@@ -12,13 +14,14 @@ type Props = {
   initialReaction?: Reaction | null;
 };
 
-const OPTIONS: { reaction: Reaction; emoji: string; label: string }[] = [
-  { reaction: "love_it", emoji: "❤️", label: "Love it" },
-  { reaction: "like_it", emoji: "👍", label: "Like it" },
-  { reaction: "not_for_me", emoji: "👎", label: "Not for me" },
-];
+const OPTIONS = [
+  { reaction: "love_it", emoji: "❤️", key: "loveIt" },
+  { reaction: "like_it", emoji: "👍", key: "likeIt" },
+  { reaction: "not_for_me", emoji: "👎", key: "notForMe" },
+] as const satisfies readonly { reaction: Reaction; emoji: string; key: Key }[];
 
 export function FeedbackButtons({ historyId, title, genre, year, initialReaction }: Props) {
+  const { t } = useLang();
   const [reaction, setReaction] = useState<Reaction | null>(initialReaction ?? null);
   const submitFn = useServerFn(submitFeedback);
   const qc = useQueryClient();
@@ -31,16 +34,16 @@ export function FeedbackButtons({ historyId, title, genre, year, initialReaction
       qc.invalidateQueries({ queryKey: ["feedback"] });
       qc.invalidateQueries({ queryKey: ["tasteStats"] });
     },
-    onError: () => toast.error("Couldn't save feedback"),
+    onError: () => toast.error(t("feedbackFailed")),
   });
 
   return (
     <div className="bg-card rounded-2xl chunky-border-sm p-4">
       <p className="text-xs uppercase tracking-widest text-muted-foreground font-bold mb-3">
-        How does this land?
+        {t("howDoesThisLand")}
       </p>
       <div className="grid grid-cols-3 gap-2">
-        {OPTIONS.map(({ reaction: r, emoji, label }) => {
+        {OPTIONS.map(({ reaction: r, emoji, key }) => {
           const active = reaction === r;
           return (
             <button
@@ -54,7 +57,7 @@ export function FeedbackButtons({ historyId, title, genre, year, initialReaction
                 }`}
             >
               <span className="text-xl transition-transform duration-200 group-hover:scale-110">{emoji}</span>
-              {label}
+              {t(key)}
             </button>
           );
         })}

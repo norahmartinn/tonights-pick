@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import { getProfile, updateProfile } from "@/lib/profile.functions";
 import { AppShell } from "@/components/AppShell";
+import { useLang } from "@/hooks/use-lang";
 import { User, Heart, Clock, Calendar, Check, LogOut, Lock } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -27,6 +28,7 @@ function formatDate(iso?: string | null) {
 }
 
 function ProfilePage() {
+  const { t } = useLang();
   const getFn = useServerFn(getProfile);
   const updFn = useServerFn(updateProfile);
   const qc = useQueryClient();
@@ -58,28 +60,28 @@ function ProfilePage() {
     mutationFn: () => updFn({ data: { display_name: name.trim(), avatar_url: avatar.trim() } }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["profile"] });
-      toast.success("Profile updated");
+      toast.success(t("profileUpdated"));
     },
-    onError: (e) => toast.error(e instanceof Error ? e.message : "Could not save"),
+    onError: (e) => toast.error(e instanceof Error ? e.message : t("couldNotSave")),
   });
 
   return (
     <AppShell>
       <div className="pt-7 pb-6 flex items-center gap-[0.3em] text-[2rem] sm:text-[2.75rem]">
         <h1 className="text-[1em] leading-[1.02] font-display text-balance min-w-0">
-          <span className="italic text-primary">Profile.</span>
+          <span className="italic text-primary">{t("profile")}</span>
         </h1>
         <img src={mascotWaving} alt="" width={112} height={112} loading="lazy" className="h-[1.75em] w-auto shrink-0" />
       </div>
 
-      {isLoading && <p className="text-muted-foreground py-8 text-center animate-pulse italic">Opening your journal…</p>}
+      {isLoading && <p className="text-muted-foreground py-8 text-center animate-pulse italic">{t("profileLoading")}</p>}
 
       {!isLoading && data && (
         <div className="space-y-4">
           <div className="bg-card rounded-3xl elegant-border p-5 flex items-center gap-4 shadow-sm">
             <AvatarBubble avatarId={avatar} name={name} size={80} className="border-[3px] border-ink/10" />
             <div className="min-w-0">
-              <p className="font-display text-2xl truncate">{name || "No name"}</p>
+              <p className="font-display text-2xl truncate">{name || t("noName")}</p>
               {data.email && <p className="text-sm text-muted-foreground truncate">{data.email}</p>}
               <p className="text-xs text-muted-foreground mt-1.5 flex items-center gap-1">
                 <Calendar size={12} /> Joined {formatDate(data.profile?.created_at)}
@@ -91,12 +93,12 @@ function ProfilePage() {
             <div className="bg-card rounded-2xl elegant-border p-4 text-center shadow-sm">
               <Heart className="mx-auto text-curtain" fill="currentColor" size={20} />
               <p className="font-display text-2xl mt-1.5">{data.favoritesCount}</p>
-              <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-[0.2em]">In collection</p>
+              <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-[0.2em]">{t("inCollection")}</p>
             </div>
             <div className="bg-card rounded-2xl elegant-border p-4 text-center shadow-sm">
               <Clock className="mx-auto" size={20} />
               <p className="font-display text-2xl mt-1.5">{data.historyCount}</p>
-              <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-[0.2em]">Screenings</p>
+              <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-[0.2em]">{t("screenings")}</p>
             </div>
           </div>
 
@@ -108,19 +110,19 @@ function ProfilePage() {
             }}
             className="mt-2 bg-card rounded-3xl elegant-border p-4 space-y-4 shadow-sm"
           >
-            <h2 className="font-display text-xl">Edit profile</h2>
+            <h2 className="font-display text-xl">{t("editProfile")}</h2>
             <label className="block">
-              <span className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-bold">Display name</span>
+              <span className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-bold">{t("displayName")}</span>
               <input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 className="mt-2 w-full bg-input elegant-border-sm rounded-2xl px-4 py-3 font-semibold focus:outline-none focus:ring-2 focus:ring-curtain/30"
-                placeholder="Your name"
+                placeholder={t("yourName")}
               />
             </label>
             <div>
-              <span className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-bold">Choose an avatar</span>
-              <p className="text-xs text-muted-foreground mt-1.5 italic">One character, many nights. Pick a version of Tonight.</p>
+              <span className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-bold">{t("chooseAvatar")}</span>
+              <p className="text-xs text-muted-foreground mt-1.5 italic">{t("avatarHint")}</p>
               {(() => {
                 const progress: UserProgress = {
                   favorites: data.favoritesCount,

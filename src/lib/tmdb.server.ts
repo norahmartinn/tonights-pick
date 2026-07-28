@@ -62,6 +62,7 @@ export async function findTitle(
   year?: string,
   kind?: "movie" | "tv" | "any",
   pais = "ES",
+  idiomaUi: "en" | "es" = "en",
 ): Promise<TmdbDetails | null> {
   try {
     const search = await tmdb<{ results: SearchHit[] }>("/search/multi", {
@@ -79,7 +80,7 @@ export async function findTitle(
     if (!hits.length) return null;
     hits.sort((a, b) => scoreMatch(b, title, year) - scoreMatch(a, title, year));
     const best = hits[0];
-    return await fetchDetails(best.id, best.media_type, pais);
+    return await fetchDetails(best.id, best.media_type, pais, idiomaUi);
   } catch {
     return null;
   }
@@ -89,6 +90,7 @@ export async function fetchDetails(
   id: number,
   media_type: "movie" | "tv",
   pais = "ES",
+  idiomaUi: "en" | "es" = "en",
 ): Promise<TmdbDetails | null> {
   try {
     type Detail = {
@@ -114,7 +116,12 @@ export async function fetchDetails(
         }>;
       };
     };
-    const d = await tmdb<Detail>(`/${media_type}/${id}`, { append_to_response: "credits,watch/providers" });
+    // La sinopsis y los géneros vienen traducidos si se pide el idioma; es
+    // mucho texto visible como para dejarlo siempre en inglés.
+    const d = await tmdb<Detail>(`/${media_type}/${id}`, {
+      append_to_response: "credits,watch/providers",
+      language: idiomaUi === "es" ? "es-ES" : "en-US",
+    });
     const title = d.title ?? d.name ?? "";
     const cast = (d.credits?.cast ?? [])
       .sort((a, b) => a.order - b.order)

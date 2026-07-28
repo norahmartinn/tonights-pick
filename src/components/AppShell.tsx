@@ -7,13 +7,14 @@ import type { ReactNode } from "react";
 import { getProfile } from "@/lib/profile.functions";
 import { AvatarBubble } from "@/components/AvatarBubble";
 import { useTheme } from "@/hooks/use-theme";
+import { useLang } from "@/hooks/use-lang";
 
 const NAV = [
-  { to: "/", label: "Home", Icon: Sparkles },
-  { to: "/favorites", label: "Favorites", Icon: Heart },
-  { to: "/history", label: "History", Icon: Clock },
-  { to: "/taste", label: "Taste", Icon: BarChart2 },
-];
+  { to: "/", key: "navHome", Icon: Sparkles },
+  { to: "/favorites", key: "navFavorites", Icon: Heart },
+  { to: "/history", key: "navHistory", Icon: Clock },
+  { to: "/taste", key: "navTaste", Icon: BarChart2 },
+] as const;
 
 /**
  * Ancho del contenido. `focus` es la columna estrecha para leer o decidir una
@@ -42,6 +43,7 @@ export function AppShell({
   const avatarId = data?.profile?.avatar_url;
   const name = data?.profile?.display_name;
   const { theme, toggle } = useTheme();
+  const { lang, toggle: cambiarIdioma, t } = useLang();
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -53,25 +55,35 @@ export function AppShell({
           <nav className="flex items-center gap-0.5">
             {/* En móvil estos cuatro viven en la barra inferior: metidos aquí
                 no caben (a 320px la cabecera se desbordaba). */}
-            {NAV.map(({ to, label, Icon }) => (
+            {NAV.map(({ to, key, Icon }) => (
               <Link
                 key={to}
                 to={to}
                 className="group hidden sm:block p-2.5 rounded-2xl text-muted-foreground hover:text-foreground hover:bg-muted/70 transition-colors btn-lift"
                 activeProps={{ className: "group hidden sm:block p-2.5 rounded-2xl bg-muted text-primary btn-lift" }}
                 activeOptions={{ exact: true }}
-                aria-label={label}
-                title={label}
+                aria-label={t(key)}
+                title={t(key)}
               >
                 <Icon size={18} strokeWidth={2.5} className="btn-icon" />
               </Link>
             ))}
+            {/* Dos letras en vez de una bandera: un idioma no es un país. */}
+            <button
+              type="button"
+              onClick={cambiarIdioma}
+              className="group px-2.5 py-3 sm:py-2.5 rounded-2xl text-muted-foreground hover:text-foreground hover:bg-muted/70 transition-colors btn-lift text-xs font-bold tracking-wide"
+              aria-label={lang === "es" ? t("switchToEn") : t("switchToEs")}
+              title={lang === "es" ? t("switchToEn") : t("switchToEs")}
+            >
+              {lang === "es" ? "EN" : "ES"}
+            </button>
             <button
               type="button"
               onClick={toggle}
               className="group p-3 sm:p-2.5 rounded-2xl text-muted-foreground hover:text-foreground hover:bg-muted/70 transition-colors btn-lift"
-              aria-label={theme === "dark" ? "Switch to light mode" : "Switch to night mode"}
-              title={theme === "dark" ? "Light mode" : "Night mode"}
+              aria-label={theme === "dark" ? t("toLight") : t("toDark")}
+              title={theme === "dark" ? t("toLight") : t("toDark")}
             >
               {theme === "dark" ? <Sun size={18} strokeWidth={2.5} className="btn-icon" /> : <Moon size={18} strokeWidth={2.5} className="btn-icon" />}
             </button>
@@ -79,8 +91,8 @@ export function AppShell({
               to="/profile"
               className="p-2 sm:p-1.5 rounded-full hover:bg-muted/70 transition-colors ml-0.5 btn-lift"
               activeProps={{ className: "p-2 sm:p-1.5 rounded-full bg-muted ring-2 ring-ink/10 btn-lift" }}
-              aria-label="Profile"
-              title="Profile"
+              aria-label={t("navProfile")}
+              title={t("navProfile")}
             >
               <AvatarBubble avatarId={avatarId} name={name} size={28} />
             </Link>
@@ -97,7 +109,7 @@ export function AppShell({
         aria-label="Main"
       >
         <div className="flex items-stretch justify-around">
-          {NAV.map(({ to, label, Icon }) => (
+          {NAV.map(({ to, key, Icon }) => (
             <Link
               key={to}
               to={to}
@@ -106,7 +118,7 @@ export function AppShell({
               activeOptions={{ exact: true }}
             >
               <Icon size={20} strokeWidth={2.5} />
-              <span className="text-[10px] font-semibold tracking-wide">{label}</span>
+              <span className="text-[10px] font-semibold tracking-wide">{t(key)}</span>
             </Link>
           ))}
         </div>
