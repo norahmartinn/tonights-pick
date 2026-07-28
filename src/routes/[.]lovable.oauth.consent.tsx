@@ -84,7 +84,7 @@ function Consent() {
     <main className="min-h-screen bg-background flex items-center justify-center p-6">
       <div className="w-full max-w-md bg-card text-card-foreground rounded-3xl p-8 chunky-border">
         <h1 className="text-3xl font-display mb-2">
-          Connect {clientName} to Tonight<span className="text-curtain">.</span>
+          Connect {clientName} to Tonight's pick<span className="text-curtain">.</span>
         </h1>
         <p className="text-muted-foreground mb-4 text-sm">
           {clientName} will be able to act as you inside Tonight — get personalized recommendations,

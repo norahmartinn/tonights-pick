@@ -48,7 +48,7 @@ export function AppShell({
       <header className="sticky top-0 z-20 backdrop-blur bg-background/85 border-b border-ink/8">
         <div className="max-w-5xl mx-auto px-5 py-3 flex items-center justify-between">
           <Link to="/" className="text-2xl font-display tracking-tight pressable py-1">
-            Tonight<span className="text-curtain">.</span>
+            Tonight's pick<span className="text-curtain">.</span>
           </Link>
           <nav className="flex items-center gap-0.5">
             {/* En móvil estos cuatro viven en la barra inferior: metidos aquí

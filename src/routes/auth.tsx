@@ -82,8 +82,8 @@ function AuthPage() {
     <div className="min-h-screen bg-background flex items-center justify-center p-6">
       <div className="w-full max-w-md">
         <Link to="/auth" className="block text-center mb-6">
-          <h1 className="text-5xl font-display tracking-tight">
-            Tonight<span className="text-curtain">.</span>
+          <h1 className="text-[2.5rem] sm:text-5xl font-display tracking-tight text-balance">
+            Tonight's pick<span className="text-curtain">.</span>
           </h1>
         </Link>
 
