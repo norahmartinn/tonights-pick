@@ -10,7 +10,18 @@ necesita un runtime. El build de nitro ya apunta a Cloudflare Workers.
 npx wrangler login
 ```
 
-## 2. Claves de entorno
+## 2. Backend de Supabase
+
+Si partes de un proyecto de Supabase vacío, crea el esquema pegando
+`supabase/bootstrap.sql` en el editor SQL del panel. Es idempotente y deja las
+cuatro tablas (`profiles`, `favorites`, `history`, `feedback`) con sus políticas
+de seguridad, índices y triggers.
+
+Después, en *Authentication → Providers → Email*, desactiva **Confirm email**:
+si no, nadie puede entrar sin pinchar un enlace, y el SMTP que trae Supabase de
+serie manda muy pocos correos y suele acabar en spam.
+
+## 3. Claves de entorno
 
 Las `VITE_*` se incrustan en el bundle **al construir**, así que basta con
 tenerlas en `.env` local antes de `npm run build`.
@@ -23,16 +34,23 @@ npx wrangler secret put SUPABASE_URL              --name tonights-pick
 npx wrangler secret put SUPABASE_PUBLISHABLE_KEY  --name tonights-pick
 npx wrangler secret put SUPABASE_PROJECT_ID       --name tonights-pick
 
-# IA — hace falta UNA de las dos, si no las recomendaciones fallan
-npx wrangler secret put ANTHROPIC_API_KEY         --name tonights-pick
-# o
-npx wrangler secret put OPENAI_API_KEY            --name tonights-pick
+# IA — obligatorio, si no las recomendaciones fallan.
+# En producción va por Groq, que es gratis y sin tarjeta. `ai.server.ts` acepta
+# cualquier endpoint compatible con OpenAI, así que basta con apuntarlo ahí:
+npx wrangler secret put OPENAI_API_KEY            --name tonights-pick  # key gsk_… de Groq
+npx wrangler secret put AI_PROVIDER               --name tonights-pick  # openai
+npx wrangler secret put AI_BASE_URL               --name tonights-pick  # https://api.groq.com/openai/v1
+npx wrangler secret put AI_MODEL                  --name tonights-pick  # llama-3.3-70b-versatile
 
-# Opcional: pósters y metadatos de películas (token v4 gratuito de themoviedb.org)
+# Pósters y metadatos (token v4 gratuito de themoviedb.org). Técnicamente
+# opcional, pero sin él el hueco del póster sale roto.
 npx wrangler secret put TMDB_API_TOKEN            --name tonights-pick
 ```
 
-## 3. Construir y desplegar
+Para usar OpenAI o Anthropic de pago en su lugar, pon `OPENAI_API_KEY` o
+`ANTHROPIC_API_KEY` y borra `AI_BASE_URL` y `AI_MODEL`.
+
+## 4. Construir y desplegar
 
 ```bash
 npm run build
