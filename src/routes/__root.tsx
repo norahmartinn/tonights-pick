@@ -10,7 +10,6 @@ import {
 import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
-import { reportLovableError } from "../lib/lovable-error-reporting";
 import { supabase } from "@/integrations/supabase/client";
 import { Toaster } from "sonner";
 
@@ -39,10 +38,6 @@ function NotFoundComponent() {
 function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   console.error(error);
   const router = useRouter();
-  useEffect(() => {
-    reportLovableError(error, { boundary: "tanstack_root_error_component" });
-  }, [error]);
-
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
@@ -74,6 +69,10 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   );
 }
 
+// Las etiquetas og:/twitter: necesitan URLs absolutas: los rastreadores de
+// LinkedIn, WhatsApp o Twitter no resuelven rutas relativas.
+const SITE_URL = "https://tonights-pick.norahmartinn.workers.dev";
+
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   head: () => ({
     meta: [
@@ -85,12 +84,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:title", content: "Tonight — what should I watch?" },
       { property: "og:description", content: "Tell Tonight your mood and get one perfect movie or show pick: with the platform, rating, and reason why." },
       { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary" },
-      { name: "twitter:site", content: "@Lovable" },
+      { property: "og:url", content: SITE_URL },
+      { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:title", content: "Tonight — what should I watch?" },
       { name: "twitter:description", content: "Tell Tonight your mood and get one perfect movie or show pick: with the platform, rating, and reason why." },
-      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/4e38b39f-a27e-417e-a3e7-2df4b30d136e" },
-      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/4e38b39f-a27e-417e-a3e7-2df4b30d136e" },
+      { property: "og:image", content: `${SITE_URL}/og-image.png` },
+      { property: "og:image:width", content: "1200" },
+      { property: "og:image:height", content: "630" },
+      { name: "twitter:image", content: `${SITE_URL}/og-image.png` },
     ],
     links: [
       {
