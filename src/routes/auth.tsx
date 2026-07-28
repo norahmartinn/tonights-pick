@@ -81,7 +81,7 @@ function AuthPage() {
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-6">
       <div className="w-full max-w-md">
-        <Link to="/auth" className="block text-center mb-6">
+        <Link to="/auth" className="block text-center mb-20 sm:mb-24">
           <h1 className="text-[2.5rem] sm:text-5xl font-display tracking-tight text-balance">
             Tonight's pick<span className="text-curtain">.</span>
           </h1>
@@ -93,7 +93,7 @@ function AuthPage() {
             alt=""
             width={160}
             height={160}
-            className="absolute right-4 -top-20 sm:-top-24 w-24 h-24 sm:w-28 sm:h-28 pointer-events-none select-none z-10"
+            className="absolute right-6 top-0 -translate-y-[86.3%] h-24 sm:h-28 w-auto pointer-events-none select-none z-10"
           />
         <div className="bg-card text-card-foreground rounded-3xl p-8 elegant-border relative shadow-sm">
           <h2 className="text-2xl font-display mb-1">

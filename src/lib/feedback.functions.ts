@@ -213,7 +213,10 @@ export const getTasteStats = createServerFn({ method: "GET" })
 export type CharacterTwin = {
   name: string;
   source: string;
+  /** Por qué te pareces, citando tus gustos reales. */
   why: string;
+  /** Títulos que a ese personaje también le gustarían, y el motivo. */
+  shared: { title: string; reason: string }[];
 };
 
 export const getCharacterTwin = createServerFn({ method: "GET" })
@@ -237,29 +240,71 @@ export const getCharacterTwin = createServerFn({ method: "GET" })
         .limit(30),
     ]);
 
-    const loved = (feedbackRows ?? []).filter((f) => f.reaction === "love_it").map((f) => f.title);
-    const liked = (feedbackRows ?? []).filter((f) => f.reaction === "like_it").map((f) => f.title);
-    const favTitles = (favs ?? []).map((f) => f.title);
-    const moods = Array.from(
-      new Set(((historyRows ?? []) as Array<{ mood: string | null }>).map((h) => h.mood).filter(Boolean))
+    // Orden estable: la misma entrada debe producir siempre la misma salida.
+    // Sin esto, el orden que devuelve Postgres varía y el personaje cambiaba
+    // en cada recarga aunque los gustos fueran idénticos.
+    const orden = (xs: string[]) => Array.from(new Set(xs)).sort();
+
+    const loved = orden((feedbackRows ?? []).filter((f) => f.reaction === "love_it").map((f) => f.title));
+    const liked = orden((feedbackRows ?? []).filter((f) => f.reaction === "like_it").map((f) => f.title));
+    const favTitles = orden((favs ?? []).map((f) => f.title));
+    const generos = orden(
+      [...(favs ?? []), ...(feedbackRows ?? [])]
+        .flatMap((r) => (r.genre ?? "").split(/[,/·]/).map((s: string) => s.trim()))
+        .filter(Boolean)
+    );
+    const moods = orden(
+      ((historyRows ?? []) as Array<{ mood: string | null }>).map((h) => h.mood ?? "").filter(Boolean)
     ).slice(0, 8);
 
     if (!loved.length && !liked.length && !favTitles.length) return null;
 
-    const system = `You are a playful pop-culture analyst. Given a user's viewing taste, name ONE well-known FICTIONAL CHARACTER from a movie or TV show whose personality and taste best match this user. Respond ONLY as compact JSON: {"name": string, "source": string, "why": string}. "source" is the film/show. "why" is 1-2 punchy sentences. No markdown.`;
+    // El catálogo del que puede tirar para justificar: solo lo que ella ha valorado.
+    const catalogo = orden([...loved, ...liked, ...favTitles]);
+
+    const system = `You match a viewer to ONE well-known fictional character from film or TV.
+
+Rules:
+- The character must be widely recognisable. No obscure picks.
+- Base the match ONLY on the viewing data given. Never invent tastes the data does not show.
+- "why" must cite the user's ACTUAL titles or genres by name and explain what that says about them. Two sentences. No flattery, no generic personality horoscope.
+- "shared" must contain exactly 2 entries chosen FROM THE USER'S OWN LIST below. For each, explain in one sentence why this character in particular would be drawn to that film — tie it to something concrete about the character (their job, their flaw, their arc), not vague vibes.
+- If the data is thin, pick a safe, obvious match rather than a clever one.
+
+Respond ONLY as compact JSON:
+{"name": string, "source": string, "why": string, "shared": [{"title": string, "reason": string}, {"title": string, "reason": string}]}
+No markdown.`;
+
     const userMsg = `Loved: ${loved.join(", ") || "—"}
 Liked: ${liked.join(", ") || "—"}
-Favorited: ${favTitles.join(", ") || "—"}
-Common moods: ${moods.join(", ") || "—"}`;
+Favourited: ${favTitles.join(", ") || "—"}
+Recurring genres: ${generos.join(", ") || "—"}
+Recurring moods: ${moods.join(", ") || "—"}
+
+Pick "shared" titles only from: ${catalogo.join(", ")}`;
 
     try {
-      const content = await chatJSON(system, userMsg);
+      // temperatura 0: mismos gustos -> mismo gemelo, recargues lo que recargues
+      const content = await chatJSON(system, userMsg, { temperature: 0, seed: 7 });
       const parsed = JSON.parse(content);
       if (!parsed?.name) return null;
+
+      const permitidos = new Set(catalogo.map((s) => s.toLowerCase()));
+      const shared = Array.isArray(parsed.shared)
+        ? parsed.shared
+            .filter((s: { title?: string }) => s?.title && permitidos.has(String(s.title).toLowerCase()))
+            .slice(0, 2)
+            .map((s: { title: string; reason?: string }) => ({
+              title: String(s.title),
+              reason: String(s.reason ?? ""),
+            }))
+        : [];
+
       return {
         name: String(parsed.name),
         source: String(parsed.source ?? ""),
         why: String(parsed.why ?? ""),
+        shared,
       };
     } catch {
       return null;

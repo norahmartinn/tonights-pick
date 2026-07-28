@@ -33,7 +33,15 @@ function friendlyError(status: number, body: string): Error {
  * Envía un system + user prompt y devuelve el contenido de texto (que estos
  * prompts piden en JSON). El parseo JSON lo hace cada llamador, como antes.
  */
-export async function chatJSON(system: string, user: string): Promise<string> {
+export type ChatOpts = {
+  /** 0 = lo más determinista posible. Útil cuando la misma entrada debe dar
+   *  siempre la misma respuesta (p. ej. el gemelo de personaje). */
+  temperature?: number;
+  /** Semilla, si el proveedor la soporta. Refuerza el determinismo. */
+  seed?: number;
+};
+
+export async function chatJSON(system: string, user: string, opts: ChatOpts = {}): Promise<string> {
   const provider = resolveProvider();
 
   if (provider === "anthropic") {
@@ -49,6 +57,7 @@ export async function chatJSON(system: string, user: string): Promise<string> {
       body: JSON.stringify({
         model,
         max_tokens: 1024,
+        ...(opts.temperature !== undefined ? { temperature: opts.temperature } : {}),
         // Reforzamos que devuelva solo JSON (Anthropic no tiene response_format).
         system: `${system}\n\nReturn ONLY the raw JSON object. No markdown, no code fences, no commentary.`,
         messages: [{ role: "user", content: user }],
@@ -73,6 +82,8 @@ export async function chatJSON(system: string, user: string): Promise<string> {
     body: JSON.stringify({
       model,
       response_format: { type: "json_object" },
+      ...(opts.temperature !== undefined ? { temperature: opts.temperature } : {}),
+      ...(opts.seed !== undefined ? { seed: opts.seed } : {}),
       messages: [
         { role: "system", content: system },
         { role: "user", content: user },

@@ -204,6 +204,20 @@ function TastePage() {
                 <p className="text-3xl font-display leading-tight">{twin.name}</p>
                 {twin.source && <p className="text-sm font-semibold opacity-80">from {twin.source}</p>}
                 {twin.why && <p className="text-sm mt-1 leading-snug">{twin.why}</p>}
+
+                {twin.shared.length > 0 && (
+                  <div className="mt-4 pt-4 border-t border-current/15 space-y-3">
+                    <p className="text-[10px] uppercase tracking-[0.2em] font-bold opacity-70">
+                      They'd watch these with you
+                    </p>
+                    {twin.shared.map((s) => (
+                      <div key={s.title}>
+                        <p className="text-sm font-display font-semibold">{s.title}</p>
+                        <p className="text-sm opacity-80 leading-snug">{s.reason}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </>
             )}
           </div>
