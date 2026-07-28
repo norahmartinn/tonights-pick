@@ -40,11 +40,11 @@ function FavoritesPage() {
 
   return (
     <AppShell width="wide">
-      <div className="pt-7 pb-6 flex items-center gap-2 sm:gap-4">
-        <h1 className="text-[2rem] sm:text-[2.75rem] leading-[1.02] font-display text-balance min-w-0">
-            Your <span className="italic text-primary">collection.</span>
-          </h1>
-        <img src={mascotExcited} alt="" width={112} height={112} loading="lazy" className="w-16 h-16 sm:w-28 sm:h-28 shrink-0" />
+      <div className="pt-7 pb-6 flex items-center gap-[0.3em] text-[2rem] sm:text-[2.75rem]">
+        <h1 className="text-[1em] leading-[1.02] font-display text-balance min-w-0">
+          Your <span className="italic text-primary">collection.</span>
+        </h1>
+        <img src={mascotExcited} alt="" width={112} height={112} loading="lazy" className="h-[1.75em] w-auto shrink-0" />
       </div>
 
       {isLoading && <ListSkeleton rows={3} />}
