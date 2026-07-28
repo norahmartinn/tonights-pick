@@ -65,8 +65,8 @@ function TastePage() {
     data.topGenres.length === 0;
 
   return (
-    <AppShell>
-      <div className="pt-7 pb-6 flex items-start gap-3">
+    <AppShell width="wide">
+      <div className="pt-7 pb-6 flex items-start gap-3 max-w-lg">
         <div className="flex-1 min-w-0 pt-1">
           <h1 className="text-[2rem] sm:text-[2.5rem] leading-[1.02] font-display text-balance">
             Your <span className="italic text-primary">taste.</span>
@@ -95,7 +95,7 @@ function TastePage() {
       )}
 
       {data && !isEmpty && (
-        <div className="space-y-5 mt-2">
+        <div className="mt-2 space-y-5 lg:space-y-0 lg:columns-2 lg:gap-5 [&>*]:lg:mb-5 [&>*]:lg:break-inside-avoid">
           <div className="grid grid-cols-2 gap-3">
             <StatCard
               label="Match accuracy"

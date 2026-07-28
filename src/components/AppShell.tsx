@@ -15,7 +15,27 @@ const NAV = [
   { to: "/taste", label: "Taste", Icon: BarChart2 },
 ];
 
-export function AppShell({ children }: { children: ReactNode }) {
+/**
+ * Ancho del contenido. `focus` es la columna estrecha para leer o decidir una
+ * sola cosa (pedir la recomendación, editar el perfil); `wide` es para las
+ * pantallas que son listas y en escritorio pueden ir en rejilla.
+ * La cabecera mantiene siempre el ancho grande para que el logo no salte
+ * de sitio al navegar entre secciones.
+ */
+type Width = "focus" | "feature" | "wide";
+const MAIN_WIDTH: Record<Width, string> = {
+  focus: "max-w-lg",
+  feature: "max-w-3xl",
+  wide: "max-w-5xl",
+};
+
+export function AppShell({
+  children,
+  width = "focus",
+}: {
+  children: ReactNode;
+  width?: Width;
+}) {
   const queryClient = useQueryClient();
   const getProfileFn = useServerFn(getProfile);
   const { data } = useQuery({ queryKey: ["profile"], queryFn: () => getProfileFn() });
@@ -26,7 +46,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <header className="sticky top-0 z-20 backdrop-blur bg-background/85 border-b border-ink/8">
-        <div className="max-w-md mx-auto px-5 py-3 flex items-center justify-between">
+        <div className="max-w-5xl mx-auto px-5 py-3 flex items-center justify-between">
           <Link to="/" className="text-2xl font-display tracking-tight pressable">
             Tonight<span className="text-curtain">.</span>
           </Link>
@@ -65,7 +85,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           </nav>
         </div>
       </header>
-      <main className="max-w-md mx-auto px-5 pb-16">{children}</main>
+      <main className={`${MAIN_WIDTH[width]} mx-auto px-5 pb-16`}>{children}</main>
     </div>
   );
 }

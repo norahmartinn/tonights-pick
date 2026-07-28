@@ -9,7 +9,10 @@ export function RecommendationCard({ rec }: { rec: Recommendation }) {
           Tonight's Feature
         </p>
       </div>
-      <div className="relative aspect-[2/3] bg-curtain">
+      {/* En móvil el póster manda y va arriba; a partir de md se pone a un lado
+          para que la ficha entera quepa sin scroll en un portátil. */}
+      <div className="md:flex md:items-stretch">
+      <div className="relative aspect-[2/3] bg-curtain md:w-72 md:shrink-0">
         {rec.poster_url ? (
           <img
             src={rec.poster_url}
@@ -50,9 +53,9 @@ export function RecommendationCard({ rec }: { rec: Recommendation }) {
         )}
       </div>
 
-      <div className="p-5 space-y-4">
+      <div className="p-5 space-y-4 md:flex-1 md:self-center">
         <div>
-          <h2 className="text-[1.65rem] font-display leading-[1.1] text-balance">{rec.title}</h2>
+          <h2 className="text-[1.65rem] md:text-[2rem] font-display leading-[1.1] text-balance">{rec.title}</h2>
           <p className="text-sm text-muted-foreground font-semibold mt-1.5">
             {rec.genre}
             {rec.year ? ` · ${rec.year}` : ""}
@@ -65,6 +68,7 @@ export function RecommendationCard({ rec }: { rec: Recommendation }) {
           <p className="text-[10px] font-bold uppercase tracking-widest mb-1.5 text-ink/70">Why tonight</p>
           <p className="text-sm leading-relaxed italic font-display">{rec.reason}</p>
         </div>
+      </div>
       </div>
     </article>
   );

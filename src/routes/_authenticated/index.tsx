@@ -97,7 +97,7 @@ function HomePage() {
   }
 
   return (
-    <AppShell>
+    <AppShell width="feature">
       <ProjectorLoader open={m.isPending} />
       <section className="pt-7 pb-8">
         <div className="flex items-center justify-between gap-2 mb-5">

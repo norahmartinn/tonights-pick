@@ -39,8 +39,8 @@ function FavoritesPage() {
   });
 
   return (
-    <AppShell>
-      <div className="pt-7 pb-6 flex items-start gap-3">
+    <AppShell width="wide">
+      <div className="pt-7 pb-6 flex items-start gap-3 max-w-lg">
         <div className="flex-1 min-w-0 pt-1">
           <h1 className="text-[2rem] sm:text-[2.5rem] leading-[1.02] font-display text-balance">
             Your <span className="italic text-primary">collection.</span>
@@ -60,7 +60,7 @@ function FavoritesPage() {
         />
       )}
 
-      <ul className="space-y-3 mt-2">
+      <ul className="mt-2 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {data?.map((f) => (
           <li
             key={f.id}
