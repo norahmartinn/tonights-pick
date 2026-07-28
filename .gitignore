@@ -38,3 +38,8 @@ dist-ssr
 
 # Build output
 .output/
+
+# Skills y config de agentes (herramientas locales, no forman parte de la app)
+.agents/
+.claude/
+skills-lock.json
