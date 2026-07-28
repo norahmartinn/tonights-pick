@@ -193,6 +193,17 @@ No markdown, no commentary.${tasteContext}`;
       }
     };
 
+    // Cloudflare marca el país en cada petición. Sirve para no decirle a
+    // alguien de México que algo está en una plataforma que allí no existe.
+    let pais = "ES";
+    try {
+      const { getRequest } = await import("@tanstack/react-start/server");
+      const cabecera = getRequest()?.headers?.get("cf-ipcountry");
+      if (cabecera && /^[A-Z]{2}$/.test(cabecera)) pais = cabecera;
+    } catch {
+      // sin cabecera nos quedamos con España
+    }
+
     const { findTitle } = await import("./tmdb.server");
 
     let parsed = await pedirTitulo([]);
@@ -204,7 +215,7 @@ No markdown, no commentary.${tasteContext}`;
       if (segundo?.title && titulosPermitidos.has(segundo.title.toLowerCase())) parsed = segundo;
     }
 
-    let tmdb = await findTitle(parsed.title ?? "", parsed.year, data.kind).catch(() => null);
+    let tmdb = await findTitle(parsed.title ?? "", parsed.year, data.kind, pais).catch(() => null);
 
     // Si TMDB no lo encuentra, lo más probable es que el modelo se lo haya
     // inventado (pasa sobre todo con peticiones de nicho). Una segunda
@@ -213,7 +224,7 @@ No markdown, no commentary.${tasteContext}`;
       const fantasma = parsed.title;
       const segundo = await pedirTitulo([fantasma]).catch(() => null);
       if (segundo?.title) {
-        const verificado = await findTitle(segundo.title, segundo.year, data.kind).catch(() => null);
+        const verificado = await findTitle(segundo.title, segundo.year, data.kind, pais).catch(() => null);
         if (verificado) {
           parsed = segundo;
           tmdb = verificado;
@@ -238,6 +249,9 @@ No markdown, no commentary.${tasteContext}`;
 
     // TMDB manda sobre los metadatos: póster, géneros, nota, reparto y dirección.
     if (tmdb) {
+      // TMDB sabe dónde se puede ver; el modelo se lo inventaba. Si no consta,
+      // se deja vacío: la ficha oculta la etiqueta y no miente.
+      result.platform = tmdb.platform;
       result.title = tmdb.title || result.title;
       result.year = tmdb.year || result.year;
       result.genre = tmdb.genre || result.genre;

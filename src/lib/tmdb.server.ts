@@ -18,6 +18,8 @@ export type TmdbDetails = {
   poster_url: string;
   director: string;
   cast_members: string;
+  /** Dónde se puede ver en streaming, según TMDB. Vacío si no consta. */
+  platform: string;
 };
 
 type SearchHit = {
@@ -59,6 +61,7 @@ export async function findTitle(
   title: string,
   year?: string,
   kind?: "movie" | "tv" | "any",
+  pais = "ES",
 ): Promise<TmdbDetails | null> {
   try {
     const search = await tmdb<{ results: SearchHit[] }>("/search/multi", {
@@ -76,7 +79,7 @@ export async function findTitle(
     if (!hits.length) return null;
     hits.sort((a, b) => scoreMatch(b, title, year) - scoreMatch(a, title, year));
     const best = hits[0];
-    return await fetchDetails(best.id, best.media_type);
+    return await fetchDetails(best.id, best.media_type, pais);
   } catch {
     return null;
   }
@@ -84,7 +87,8 @@ export async function findTitle(
 
 export async function fetchDetails(
   id: number,
-  media_type: "movie" | "tv"
+  media_type: "movie" | "tv",
+  pais = "ES",
 ): Promise<TmdbDetails | null> {
   try {
     type Detail = {
@@ -102,8 +106,15 @@ export async function fetchDetails(
         crew?: { name: string; job: string; department: string }[];
       };
       created_by?: { name: string }[];
+      "watch/providers"?: {
+        results?: Record<string, {
+          flatrate?: { provider_name: string; display_priority: number }[];
+          free?: { provider_name: string; display_priority: number }[];
+          ads?: { provider_name: string; display_priority: number }[];
+        }>;
+      };
     };
-    const d = await tmdb<Detail>(`/${media_type}/${id}`, { append_to_response: "credits" });
+    const d = await tmdb<Detail>(`/${media_type}/${id}`, { append_to_response: "credits,watch/providers" });
     const title = d.title ?? d.name ?? "";
     const cast = (d.credits?.cast ?? [])
       .sort((a, b) => a.order - b.order)
@@ -117,6 +128,25 @@ export async function fetchDetails(
     } else {
       director = (d.created_by ?? []).map((c) => c.name).join(", ");
     }
+    // Dónde se ve de verdad. Solo suscripción, gratis o con anuncios: alquiler
+    // y compra no son "plataformas donde está disponible" en el sentido que
+    // espera quien lee la ficha.
+    const porPais = d["watch/providers"]?.results?.[pais];
+    // Los "Channel" son canales de pago dentro de otro servicio (Animebox
+    // Channel Amazon Channel y compañía). Son correctos pero nadie los reconoce,
+    // así que van al final: primero las plataformas de toda la vida.
+    const esCanalDeNicho = (n: string) => /\bchannel\b/i.test(n);
+    const proveedores = [
+      ...(porPais?.flatrate ?? []),
+      ...(porPais?.free ?? []),
+      ...(porPais?.ads ?? []),
+    ].sort((a, b) => {
+      const nicho = Number(esCanalDeNicho(a.provider_name)) - Number(esCanalDeNicho(b.provider_name));
+      return nicho !== 0 ? nicho : a.display_priority - b.display_priority;
+    });
+    // TMDB trae algún nombre con espacios sobrantes ("Movistar Plus+ Ficción Total ")
+    const platform = (proveedores[0]?.provider_name ?? "").trim();
+
     return {
       tmdb_id: d.id,
       media_type,
@@ -128,6 +158,7 @@ export async function fetchDetails(
       poster_url: d.poster_path ? `${IMG}${d.poster_path}` : "",
       director,
       cast_members: cast,
+      platform,
     };
   } catch {
     return null;
