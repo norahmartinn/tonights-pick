@@ -6,6 +6,7 @@ import { listFeedback, submitFeedback, type Reaction } from "@/lib/feedback.func
 import type { Key } from "@/lib/i18n";
 import { AppShell } from "@/components/AppShell";
 import { useLang } from "@/hooks/use-lang";
+import { currentLang, translate } from "@/lib/i18n";
 import { EmptyState } from "@/components/EmptyState";
 import { ListSkeleton } from "@/components/Skeleton";
 import { Clock, Film, Trash2 } from "lucide-react";
@@ -16,16 +17,19 @@ import mascotSad from "@/assets/mascot-sad.png";
 export const Route = createFileRoute("/_authenticated/history")({
   head: () => ({
     meta: [
-      { title: "Your history — Tonight" },
-      { name: "description", content: "Every recommendation Tonight has made for you." },
+      { title: translate(currentLang(), "histTitle") },
+      { name: "description", content: translate(currentLang(), "histDesc") },
     ],
   }),
   component: HistoryPage,
 });
 
-function formatDate(iso: string) {
+function formatDate(iso: string, locale: "en" | "es") {
   const d = new Date(iso);
-  return d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+  // el idioma de la interfaz manda sobre el del navegador
+  return d.toLocaleDateString(locale === "es" ? "es-ES" : "en-GB", {
+    month: "short", day: "numeric", year: "numeric",
+  });
 }
 
 const REACTIONS = [
@@ -35,7 +39,7 @@ const REACTIONS = [
 ] as const satisfies readonly { reaction: Reaction; emoji: string; key: Key }[];
 
 function HistoryPage() {
-  const { t } = useLang();
+  const { t, lang } = useLang();
   const listFn = useServerFn(listHistory);
   const delFn = useServerFn(deleteHistory);
   const listFeedbackFn = useServerFn(listFeedback);
@@ -118,7 +122,7 @@ function HistoryPage() {
                   </button>
                 </h3>
                 <p className="text-xs text-muted-foreground font-semibold mt-1">
-                  {formatDate(h.created_at)}
+                  {formatDate(h.created_at, lang)}
                 </p>
                 {h.prompt && (
                   <p className="text-sm mt-1.5 italic text-muted-foreground line-clamp-1">

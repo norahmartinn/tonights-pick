@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { getTasteStats, getCharacterTwin } from "@/lib/feedback.functions";
 import { AppShell } from "@/components/AppShell";
 import { useLang } from "@/hooks/use-lang";
+import { currentLang, translate } from "@/lib/i18n";
 import { EmptyState } from "@/components/EmptyState";
 import { BarChart2, Wand2, Sparkles } from "lucide-react";
 import mascotExcited from "@/assets/mascot-excited.png";
@@ -11,8 +12,8 @@ import mascotExcited from "@/assets/mascot-excited.png";
 export const Route = createFileRoute("/_authenticated/taste")({
   head: () => ({
     meta: [
-      { title: "Your taste profile — Tonight" },
-      { name: "description", content: "See what Tonight has learned about your viewing taste." },
+      { title: translate(currentLang(), "tasteTitle") },
+      { name: "description", content: translate(currentLang(), "tasteDesc") },
     ],
   }),
   component: TastePage,

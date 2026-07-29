@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { getProfile, updateProfile } from "@/lib/profile.functions";
 import { AppShell } from "@/components/AppShell";
 import { useLang } from "@/hooks/use-lang";
+import { currentLang, translate } from "@/lib/i18n";
 import { User, Heart, Clock, Calendar, Check, LogOut, Lock } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,20 +16,22 @@ import mascotWaving from "@/assets/mascot-waving.png";
 export const Route = createFileRoute("/_authenticated/profile")({
   head: () => ({
     meta: [
-      { title: "Your profile — Tonight" },
-      { name: "description", content: "Manage your Tonight profile and see your activity." },
+      { title: translate(currentLang(), "profTitle") },
+      { name: "description", content: translate(currentLang(), "profDesc") },
     ],
   }),
   component: ProfilePage,
 });
 
-function formatDate(iso?: string | null) {
+function formatDate(iso?: string | null, locale: "en" | "es") {
   if (!iso) return "—";
-  return new Date(iso).toLocaleDateString(undefined, { month: "long", day: "numeric", year: "numeric" });
+  return new Date(iso).toLocaleDateString(locale === "es" ? "es-ES" : "en-GB", {
+    month: "long", day: "numeric", year: "numeric",
+  });
 }
 
 function ProfilePage() {
-  const { t } = useLang();
+  const { t, lang } = useLang();
   const getFn = useServerFn(getProfile);
   const updFn = useServerFn(updateProfile);
   const qc = useQueryClient();
@@ -84,7 +87,7 @@ function ProfilePage() {
               <p className="font-display text-2xl truncate">{name || t("noName")}</p>
               {data.email && <p className="text-sm text-muted-foreground truncate">{data.email}</p>}
               <p className="text-xs text-muted-foreground mt-1.5 flex items-center gap-1">
-                <Calendar size={12} /> Joined {formatDate(data.profile?.created_at)}
+                <Calendar size={12} /> {t("joined")} {formatDate(data.profile?.created_at, lang)}
               </p>
             </div>
           </div>
@@ -93,7 +96,7 @@ function ProfilePage() {
             <div className="bg-card rounded-2xl elegant-border p-4 text-center shadow-sm">
               <Heart className="mx-auto text-curtain" fill="currentColor" size={20} />
               <p className="font-display text-2xl mt-1.5">{data.favoritesCount}</p>
-              <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-[0.2em]">{t("inCollection")}</p>
+              <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-[0.2em]">{t("savedCount")}</p>
             </div>
             <div className="bg-card rounded-2xl elegant-border p-4 text-center shadow-sm">
               <Clock className="mx-auto" size={20} />
@@ -184,7 +187,7 @@ function ProfilePage() {
                       })}
                     </div>
                     <p className="text-[11px] text-muted-foreground/80 italic mt-4">
-                      Locked versions unlock as you use Tonight more.
+                      {t("lockedAvatars")}
                     </p>
                   </div>
                 );
@@ -195,7 +198,7 @@ function ProfilePage() {
               disabled={save.isPending || !name.trim()}
               className="w-full bg-primary text-primary-foreground font-bold py-3.5 rounded-2xl elegant-border-sm disabled:opacity-50 hover:brightness-105 btn-glow"
             >
-              {save.isPending ? "Saving…" : "Save changes"}
+              {save.isPending ? t("saving") : t("saveChanges")}
             </button>
           </form>
 
@@ -204,7 +207,7 @@ function ProfilePage() {
             onClick={signOut}
             className="group w-full flex items-center justify-center gap-2 py-3.5 text-sm font-bold text-destructive/90 hover:text-destructive hover:bg-destructive/5 rounded-2xl transition btn-lift"
           >
-            <LogOut size={16} className="btn-icon" /> Sign out
+            <LogOut size={16} className="btn-icon" /> {t("signOutBtn")}
           </button>
         </div>
       )}

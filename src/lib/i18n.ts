@@ -124,6 +124,13 @@ const en = {
   profileLoading: "Opening your journal…",
   noName: "No name",
   screenings: "Screenings",
+  savedCount: "Saved",
+  joined: "Joined",
+  projectionist: "Tonight's projectionist",
+  lockedAvatars: "Locked versions unlock as you use the app more.",
+  saveChanges: "Save changes",
+  saving: "Saving…",
+  signOutBtn: "Sign out",
   editProfile: "Edit profile",
   displayName: "Display name",
   chooseAvatar: "Choose an avatar",
@@ -248,6 +255,13 @@ const es: Record<keyof typeof en, string> = {
   profileLoading: "Abriendo tu cuaderno…",
   noName: "Sin nombre",
   screenings: "Sesiones",
+  savedCount: "Guardadas",
+  joined: "Se unió el",
+  projectionist: "El proyeccionista",
+  lockedAvatars: "Los bloqueados se van desbloqueando según uses la app.",
+  saveChanges: "Guardar cambios",
+  saving: "Guardando…",
+  signOutBtn: "Cerrar sesión",
   editProfile: "Editar perfil",
   displayName: "Nombre",
   chooseAvatar: "Elige un avatar",
@@ -266,4 +280,18 @@ export type Key = keyof typeof en;
 
 export function translate(lang: Lang, key: Key): string {
   return (lang === "es" ? es[key] : en[key]) ?? en[key];
+}
+
+/**
+ * Idioma actual leído directamente de localStorage.
+ *
+ * Los `head()` de las rutas los evalúa el router, no un componente, así que
+ * ahí no se puede usar el hook. En el servidor no hay localStorage: se cae a
+ * inglés, que es lo que verán los rastreadores.
+ */
+export function currentLang(): Lang {
+  if (typeof window === "undefined") return "en";
+  const guardado = window.localStorage.getItem("tonight-lang");
+  if (guardado === "es" || guardado === "en") return guardado;
+  return navigator.language?.toLowerCase().startsWith("es") ? "es" : "en";
 }

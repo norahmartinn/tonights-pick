@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { Sparkles, Heart, RefreshCw, Film, Tv, Shuffle, Dice5 } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { useLang } from "@/hooks/use-lang";
+import { currentLang, translate } from "@/lib/i18n";
 import { RecommendationCard } from "@/components/RecommendationCard";
 import { FeedbackButtons } from "@/components/FeedbackButtons";
 import { ProjectorLoader } from "@/components/ProjectorLoader";
@@ -19,8 +20,8 @@ import { pickSuggestions } from "@/lib/suggestions";
 export const Route = createFileRoute("/_authenticated/")({
   head: () => ({
     meta: [
-      { title: "Tonight — what should I watch?" },
-      { name: "description", content: "Tell Tonight your mood and get one perfect movie or show pick." },
+      { title: translate(currentLang(), "homeTitle") },
+      { name: "description", content: translate(currentLang(), "homeDesc") },
     ],
   }),
   component: HomePage,
@@ -61,12 +62,12 @@ function HomePage() {
       qc.invalidateQueries({ queryKey: ["history"] });
       window.scrollTo({ top: 0, behavior: "smooth" });
     },
-    onError: (err) => toast.error(err instanceof Error ? err.message : "Try again"),
+    onError: (err) => toast.error(err instanceof Error ? err.message : t("tryAgain")),
   });
 
   const saveMut = useMutation({
     mutationFn: () => {
-      if (!rec) throw new Error("No pick");
+      if (!rec) throw new Error(t("noPick"));
       return saveFn({
         data: {
           title: rec.title,
@@ -85,7 +86,7 @@ function HomePage() {
       qc.invalidateQueries({ queryKey: ["favorites"] });
       toast.success(t("savedToFavorites"));
     },
-    onError: (err) => toast.error(err instanceof Error ? err.message : "Could not save"),
+    onError: (err) => toast.error(err instanceof Error ? err.message : t("couldNotSave")),
   });
 
   function submit(value: string) {

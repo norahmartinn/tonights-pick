@@ -1,18 +1,34 @@
 import { useEffect, useMemo, useState } from "react";
 import mascotThinking from "@/assets/mascot-thinking.png";
+import { useLang } from "@/hooks/use-lang";
 
-const MESSAGES = [
-  "Preparing tonight's screening…",
-  "Looking through the archive…",
-  "Threading the film reel…",
-  "Dimming the house lights…",
-  "Warming up the projector…",
-  "Choosing tonight's feature…",
-  "Almost ready…",
-  "Good films deserve a proper introduction.",
-  "Cueing the opening frame…",
-  "Polishing the projector lens…",
-];
+// Mensajes de la sala de proyección mientras la IA piensa.
+const MESSAGES = {
+  en: [
+    "Preparing tonight's screening…",
+    "Looking through the archive…",
+    "Threading the film reel…",
+    "Dimming the house lights…",
+    "Warming up the projector…",
+    "Choosing tonight's feature…",
+    "Almost ready…",
+    "Good films deserve a proper introduction.",
+    "Cueing the opening frame…",
+    "Polishing the projector lens…",
+  ],
+  es: [
+    "Preparando la sesión de esta noche…",
+    "Rebuscando en el archivo…",
+    "Enhebrando la bobina…",
+    "Bajando las luces de la sala…",
+    "Calentando el proyector…",
+    "Eligiendo la película de esta noche…",
+    "Casi lista…",
+    "Una buena película merece una buena presentación.",
+    "Preparando el primer fotograma…",
+    "Limpiando la lente del proyector…",
+  ],
+} as const;
 
 function shuffled<T>(arr: T[]): T[] {
   const a = [...arr];
@@ -24,8 +40,9 @@ function shuffled<T>(arr: T[]): T[] {
 }
 
 export function ProjectorLoader({ open }: { open: boolean }) {
+  const { lang, t } = useLang();
   const [msgIdx, setMsgIdx] = useState(0);
-  const order = useMemo(() => shuffled(MESSAGES), [open]);
+  const order = useMemo(() => shuffled([...MESSAGES[lang]]), [open, lang]);
 
   useEffect(() => {
     if (!open) return;
@@ -118,7 +135,7 @@ export function ProjectorLoader({ open }: { open: boolean }) {
         />
 
         <p className="mt-5 text-[10px] uppercase tracking-[0.25em] text-muted-foreground font-bold">
-          Tonight's projectionist
+          {t("projectionist")}
         </p>
         <p
           key={msgIdx}

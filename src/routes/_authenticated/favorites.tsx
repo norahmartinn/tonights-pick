@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { listFavorites, deleteFavorite } from "@/lib/favorites.functions";
 import { AppShell } from "@/components/AppShell";
 import { useLang } from "@/hooks/use-lang";
+import { currentLang, translate } from "@/lib/i18n";
 import { EmptyState } from "@/components/EmptyState";
 import { ListSkeleton } from "@/components/Skeleton";
 import { Trash2, Heart, Film, Star } from "lucide-react";
@@ -14,8 +15,8 @@ import mascotSad from "@/assets/mascot-sad.png";
 export const Route = createFileRoute("/_authenticated/favorites")({
   head: () => ({
     meta: [
-      { title: "Your favorites — Tonight" },
-      { name: "description", content: "Movies and shows you saved for later on Tonight." },
+      { title: translate(currentLang(), "favTitle") },
+      { name: "description", content: translate(currentLang(), "favDesc") },
     ],
   }),
   component: FavoritesPage,

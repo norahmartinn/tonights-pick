@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import mascotHero from "@/assets/mascot-hero-cool.png";
 import { useLang } from "@/hooks/use-lang";
+import { currentLang, translate } from "@/lib/i18n";
 
 export const Route = createFileRoute("/auth")({
   validateSearch: (s: Record<string, unknown>) => ({
@@ -11,8 +12,8 @@ export const Route = createFileRoute("/auth")({
   }),
   head: () => ({
     meta: [
-      { title: "Sign in — Tonight" },
-      { name: "description", content: "Sign in to Tonight to save your favorite movie picks." },
+      { title: translate(currentLang(), "authTitle") },
+      { name: "description", content: translate(currentLang(), "authDesc") },
     ],
   }),
   component: AuthPage,
