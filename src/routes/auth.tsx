@@ -56,7 +56,7 @@ function AuthPage() {
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        toast.success("Welcome back");
+        toast.success(t("welcomeBack"));
         window.location.href = returnTo;
       }
     } catch (err) {
@@ -111,7 +111,7 @@ function AuthPage() {
           />
         <div className="bg-card text-card-foreground rounded-3xl p-8 elegant-border relative shadow-sm">
           <h2 className="text-2xl font-display mb-1">
-            {mode === "signin" ? t("welcomeBack") : t("joinTonight")}
+            {mode === "signin" ? t("signInHeading") : t("joinTonight")}
           </h2>
           <p className="text-muted-foreground mb-6 text-sm">
             {mode === "signin"

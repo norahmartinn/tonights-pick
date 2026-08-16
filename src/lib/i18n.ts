@@ -26,7 +26,10 @@ const en = {
   // ── acceso
   authTitle: "Sign in — Tonight's pick",
   authDesc: "Sign in to save your favourite picks.",
+  // welcomeBack es solo para el aviso posterior a entrar, donde sí consta que
+  // la persona ya tenía cuenta. El encabezado lo ve cualquiera que abra /auth.
   welcomeBack: "Welcome back",
+  signInHeading: "Sign in to Tonight's pick",
   joinTonight: "Join Tonight's pick",
   signInToSave: "Sign in to save your picks.",
   createToSave: "Create an account to save your picks.",
@@ -163,6 +166,7 @@ const es: Record<keyof typeof en, string> = {
   authTitle: "Entrar — Tonight's pick",
   authDesc: "Entra para guardar tus películas favoritas.",
   welcomeBack: "Hola de nuevo",
+  signInHeading: "Entra en Tonight's pick",
   joinTonight: "Únete a Tonight's pick",
   signInToSave: "Entra para guardar tus descubrimientos.",
   createToSave: "Crea una cuenta para guardar tus descubrimientos.",
@@ -176,7 +180,7 @@ const es: Record<keyof typeof en, string> = {
   newHere: "¿Primera vez?",
   alreadyAccount: "¿Ya tienes cuenta?",
   authFailed: "No se pudo iniciar sesión",
-  welcomeToast: "Bienvenida a Tonight's pick",
+  welcomeToast: "Te damos la bienvenida a Tonight's pick",
   googleFailed: "Falló el acceso con Google — activa el proveedor en Supabase.",
 
   homeTitle: "Tonight's pick — ¿qué veo esta noche?",
