@@ -40,7 +40,7 @@ npx wrangler secret put SUPABASE_PROJECT_ID       --name tonights-pick
 npx wrangler secret put OPENAI_API_KEY            --name tonights-pick  # key gsk_… de Groq
 npx wrangler secret put AI_PROVIDER               --name tonights-pick  # openai
 npx wrangler secret put AI_BASE_URL               --name tonights-pick  # https://api.groq.com/openai/v1
-npx wrangler secret put AI_MODEL                  --name tonights-pick  # llama-3.3-70b-versatile
+npx wrangler secret put AI_MODEL                  --name tonights-pick  # openai/gpt-oss-120b
 
 # Pósters y metadatos (token v4 gratuito de themoviedb.org). Técnicamente
 # opcional, pero sin él el hueco del póster sale roto.

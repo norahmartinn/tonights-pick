@@ -28,7 +28,7 @@ VITE_SUPABASE_URL / VITE_SUPABASE_PUBLISHABLE_KEY / VITE_SUPABASE_PROJECT_ID
 AI_PROVIDER="openai"
 OPENAI_API_KEY="gsk_..."                        # key de Groq
 AI_BASE_URL="https://api.groq.com/openai/v1"
-AI_MODEL="llama-3.3-70b-versatile"
+AI_MODEL="openai/gpt-oss-120b"
 
 # Pósters y metadatos: token v4 gratuito de themoviedb.org.
 # Sin él la app funciona, pero el hueco del póster sale roto.
