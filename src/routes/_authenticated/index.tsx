@@ -10,7 +10,7 @@ import { currentLang, translate } from "@/lib/i18n";
 import { RecommendationCard } from "@/components/RecommendationCard";
 import { FeedbackButtons } from "@/components/FeedbackButtons";
 import { ProjectorLoader } from "@/components/ProjectorLoader";
-import { recommend, type Recommendation } from "@/lib/recommend.functions";
+import { recommend, localizePick, type Recommendation } from "@/lib/recommend.functions";
 import { saveFavorite } from "@/lib/favorites.functions";
 import mascotHappy from "@/assets/mascot-happy.png";
 import mascotThinking from "@/assets/mascot-thinking.png";
@@ -48,15 +48,19 @@ function HomePage() {
   }
 
   const recommendFn = useServerFn(recommend);
+  const localizeFn = useServerFn(localizePick);
+  // Idioma en el que está escrita la ficha visible
+  const [recLang, setRecLang] = useState<"en" | "es" | null>(null);
   const saveFn = useServerFn(saveFavorite);
   const qc = useQueryClient();
 
   const m = useMutation({
     mutationFn: (p: { prompt: string; exclude: string[]; kind: "any" | "movie" | "tv" }) =>
       // el idioma va en cada petición: la ficha debe salir en el que se está viendo
-      recommendFn({ data: { ...p, lang } }),
-    onSuccess: (r) => {
+      recommendFn({ data: { ...p, lang } }).then((r) => ({ r, lang })),
+    onSuccess: ({ r, lang: idioma }) => {
       setRec(r);
+      setRecLang(idioma);
       setShown((prev) => [...prev, r.title]);
       setSavedTitle(null);
       qc.invalidateQueries({ queryKey: ["history"] });
@@ -64,6 +68,36 @@ function HomePage() {
     },
     onError: (err) => toast.error(err instanceof Error ? err.message : t("tryAgain")),
   });
+
+  // Si se cambia de idioma con una ficha en pantalla, se traduce esa misma
+  // ficha en lugar de dejarla a medias en el idioma anterior.
+  useEffect(() => {
+    if (!rec || !recLang || recLang === lang) return;
+    let cancelado = false;
+    const antes = rec;
+    localizeFn({
+      data: {
+        title: antes.title,
+        year: antes.year,
+        media_type: antes.media_type,
+        description: antes.description,
+        reason: antes.reason,
+        mood: antes.mood,
+        lang,
+      },
+    })
+      .then((nuevo) => {
+        if (cancelado) return;
+        setRec((r) => (r === antes ? { ...r, ...nuevo } : r));
+        if (nuevo.title) setSavedTitle((s) => (s === antes.title ? nuevo.title! : s));
+        setRecLang(lang);
+      })
+      .catch(() => {});
+    return () => {
+      cancelado = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lang]);
 
   const saveMut = useMutation({
     mutationFn: () => {

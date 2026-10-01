@@ -302,3 +302,63 @@ No markdown, no commentary.${idiomaSalida}${tasteContext}`;
 
     return result;
   });
+const LocalizeInput = z.object({
+  title: z.string().min(1).max(300),
+  year: z.string().max(10).optional(),
+  media_type: z.enum(["movie", "tv"]).optional(),
+  description: z.string().max(4000),
+  reason: z.string().max(2000),
+  mood: z.string().max(300).optional(),
+  lang: z.enum(["en", "es"]),
+});
+
+/**
+ * Pasa al otro idioma una ficha que ya está en pantalla, sin cambiar de
+ * película: los datos de TMDB se vuelven a pedir en el idioma nuevo y el
+ * motivo, que lo escribió el modelo, se traduce.
+ */
+export const localizePick = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => LocalizeInput.parse(input))
+  .handler(async ({ data }) => {
+    let pais = "ES";
+    try {
+      const { getRequest } = await import("@tanstack/react-start/server");
+      const cabecera = getRequest()?.headers?.get("cf-ipcountry");
+      if (cabecera && /^[A-Z]{2}$/.test(cabecera)) pais = cabecera;
+    } catch {
+      // sin cabecera nos quedamos con España
+    }
+
+    const { findTitle } = await import("./tmdb.server");
+    const tmdb = await findTitle(data.title, data.year, data.media_type ?? "any", pais, data.lang).catch(() => null);
+
+    const out: Partial<Recommendation> = {};
+    if (tmdb) {
+      if (tmdb.title) out.title = tmdb.title;
+      if (tmdb.genre) out.genre = tmdb.genre;
+      if (tmdb.description) out.description = tmdb.description;
+      if (tmdb.poster_url) out.poster_url = tmdb.poster_url;
+      out.platform = tmdb.platform;
+    }
+
+    const idioma = data.lang === "es" ? "Spanish (Spain)" : "English";
+    const aTraducir: Record<string, string> = { reason: data.reason };
+    if (data.mood) aTraducir.mood = data.mood;
+    if (!out.description && data.description) aTraducir.description = data.description;
+    try {
+      const raw = await chatJSON(
+        `Translate every value of the JSON object the user sends into ${idioma}. Keep the meaning, tone and length. Leave film and series titles as they are. Reply with a JSON object with exactly the same keys and nothing else.`,
+        JSON.stringify(aTraducir),
+        { temperature: 0 },
+      );
+      const json = JSON.parse(raw.slice(raw.indexOf("{"), raw.lastIndexOf("}") + 1)) as Record<string, unknown>;
+      for (const k of Object.keys(aTraducir)) {
+        const v = json[k];
+        if (typeof v === "string" && v.trim()) (out as Record<string, string>)[k] = v.trim();
+      }
+    } catch {
+      // si la traducción falla, al menos llegan los datos de TMDB
+    }
+    return out;
+  });

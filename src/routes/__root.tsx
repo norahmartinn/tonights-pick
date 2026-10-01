@@ -153,6 +153,14 @@ function RootComponent() {
     return () => sub.subscription.unsubscribe();
   }, [router, queryClient]);
 
+  // Los títulos de pestaña se calculan en el head() de cada ruta: al cambiar
+  // de idioma hay que volver a calcularlos o se quedan en el anterior.
+  useEffect(() => {
+    const alCambiar = () => router.invalidate();
+    window.addEventListener("tonight-lang-change", alCambiar);
+    return () => window.removeEventListener("tonight-lang-change", alCambiar);
+  }, [router]);
+
   return (
     <QueryClientProvider client={queryClient}>
       <Outlet />
