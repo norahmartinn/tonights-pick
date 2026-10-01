@@ -84,8 +84,9 @@ function ProfilePage() {
           <div className="bg-card rounded-3xl elegant-border p-5 flex items-center gap-4 shadow-sm">
             <AvatarBubble avatarId={avatar} name={name} size={80} className="border-[3px] border-ink/10" />
             <div className="min-w-0">
-              <p className="font-display text-2xl truncate">{name || t("noName")}</p>
+              <p className="font-display text-2xl truncate">{name || (data.isGuest ? t("guest") : t("noName"))}</p>
               {data.email && <p className="text-sm text-muted-foreground truncate">{data.email}</p>}
+              {data.isGuest && <p className="text-sm text-muted-foreground">{t("guestNote")}</p>}
               <p className="text-xs text-muted-foreground mt-1.5 flex items-center gap-1">
                 <Calendar size={12} /> {t("joined")} {formatDate(data.profile?.created_at, lang)}
               </p>

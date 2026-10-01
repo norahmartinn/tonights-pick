@@ -21,6 +21,7 @@ export const getProfile = createServerFn({ method: "GET" })
     return {
       profile,
       email: context.claims?.email ?? null,
+      isGuest: context.claims?.is_anonymous === true,
       favoritesCount: favCount ?? 0,
       historyCount: histCount ?? 0,
     };

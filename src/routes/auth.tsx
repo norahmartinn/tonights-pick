@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { UserRound } from "lucide-react";
 import mascotHero from "@/assets/mascot-hero-cool.png";
 import { useLang } from "@/hooks/use-lang";
 import { currentLang, translate } from "@/lib/i18n";
@@ -66,6 +67,20 @@ function AuthPage() {
     }
   }
 
+  // Sesión anónima de Supabase: crea un usuario real sin correo, así que
+  // favoritos, historial y perfil funcionan igual gracias a las mismas
+  // políticas RLS. Requiere activar "Allow anonymous sign-ins" en el panel.
+  async function handleGuest() {
+    setLoading(true);
+    const { error } = await supabase.auth.signInAnonymously();
+    if (error) {
+      toast.error(t("guestFailed"));
+      setLoading(false);
+      return;
+    }
+    window.location.href = returnTo;
+  }
+
   async function handleGoogle() {
     setLoading(true);
     // Supabase OAuth nativo. Requiere activar el provider Google en el panel de
@@ -126,6 +141,15 @@ function AuthPage() {
             className="w-full mb-4 flex items-center justify-center gap-3 bg-card text-foreground py-3 rounded-full elegant-border-sm font-semibold hover:bg-muted transition disabled:opacity-50 pressable"
           >
             <GoogleIcon /> {t("continueGoogle")}
+          </button>
+
+          <button
+            type="button"
+            onClick={handleGuest}
+            disabled={loading}
+            className="w-full mb-4 flex items-center justify-center gap-3 bg-card text-foreground py-3 rounded-full elegant-border-sm font-semibold hover:bg-muted transition disabled:opacity-50 pressable"
+          >
+            <UserRound size={18} aria-hidden="true" /> {t("continueGuest")}
           </button>
 
           <div className="flex items-center gap-3 my-4 text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
