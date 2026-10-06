@@ -1,5 +1,6 @@
 import type { Recommendation } from "@/lib/recommend.functions";
 import { Star, Film, Tv } from "lucide-react";
+import { LetterboxdLogo } from "@/components/LetterboxdLogo";
 import { useLang } from "@/hooks/use-lang";
 
 export function RecommendationCard({ rec }: { rec: Recommendation }) {
@@ -51,7 +52,7 @@ export function RecommendationCard({ rec }: { rec: Recommendation }) {
             <span className="bg-card/95 text-card-foreground text-xs font-bold px-2.5 py-1 rounded-full elegant-border-sm inline-flex items-center gap-1">
               <Star size={12} fill="currentColor" className="text-gold" /> {rec.rating}
               {/* Solo Letterboxd puntúa sobre 5; la de TMDB va sobre 10. */}
-              {rec.rating.endsWith("/5") && <span className="font-semibold text-muted-foreground">Letterboxd</span>}
+              {rec.rating.endsWith("/5") && <LetterboxdLogo height={10} />}
             </span>
           </div>
         )}

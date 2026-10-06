@@ -7,6 +7,7 @@ import { useLang } from "@/hooks/use-lang";
 import { currentLang, translate } from "@/lib/i18n";
 import { EmptyState } from "@/components/EmptyState";
 import { ListSkeleton } from "@/components/Skeleton";
+import { LetterboxdLogo } from "@/components/LetterboxdLogo";
 import { Trash2, Heart, Film, Star } from "lucide-react";
 import { toast } from "sonner";
 import mascotExcited from "@/assets/mascot-excited.png";
@@ -98,7 +99,7 @@ function FavoritesPage() {
                 {f.rating && (
                   <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-muted inline-flex items-center gap-1">
                     <Star size={10} fill="currentColor" /> {f.rating}
-                    {f.rating.endsWith("/5") && <span className="font-semibold text-muted-foreground">Letterboxd</span>}
+                    {f.rating.endsWith("/5") && <LetterboxdLogo height={8} />}
                   </span>
                 )}
               </div>
