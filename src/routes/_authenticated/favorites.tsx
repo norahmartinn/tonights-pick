@@ -98,6 +98,7 @@ function FavoritesPage() {
                 {f.rating && (
                   <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-muted inline-flex items-center gap-1">
                     <Star size={10} fill="currentColor" /> {f.rating}
+                    {f.rating.endsWith("/5") && <span className="font-semibold text-muted-foreground">Letterboxd</span>}
                   </span>
                 )}
               </div>

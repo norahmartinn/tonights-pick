@@ -1,3 +1,5 @@
+import { letterboxdRating } from "./letterboxd.server";
+
 const BASE = "https://api.themoviedb.org/3";
 const IMG = "https://image.tmdb.org/t/p/w500";
 
@@ -118,10 +120,15 @@ export async function fetchDetails(
     };
     // La sinopsis y los géneros vienen traducidos si se pide el idioma; es
     // mucho texto visible como para dejarlo siempre en inglés.
-    const d = await tmdb<Detail>(`/${media_type}/${id}`, {
-      append_to_response: "credits,watch/providers",
-      language: idiomaUi === "es" ? "es-ES" : "en-US",
-    });
+    // La nota de las películas es la de Letterboxd; se pide a la vez para no
+    // alargar la espera. Las series no están en Letterboxd y siguen con TMDB.
+    const [d, notaLetterboxd] = await Promise.all([
+      tmdb<Detail>(`/${media_type}/${id}`, {
+        append_to_response: "credits,watch/providers",
+        language: idiomaUi === "es" ? "es-ES" : "en-US",
+      }),
+      media_type === "movie" ? letterboxdRating(id) : Promise.resolve(""),
+    ]);
     const title = d.title ?? d.name ?? "";
     const cast = (d.credits?.cast ?? [])
       .sort((a, b) => a.order - b.order)
@@ -172,7 +179,7 @@ export async function fetchDetails(
       title,
       year: yearOf(d.release_date ?? d.first_air_date),
       genre: (d.genres ?? []).map((g) => g.name).join(", "),
-      rating: d.vote_average ? `${d.vote_average.toFixed(1)}/10` : "",
+      rating: notaLetterboxd || (d.vote_average ? `${d.vote_average.toFixed(1)}/10` : ""),
       description: d.overview ?? "",
       poster_url: d.poster_path ? `${IMG}${d.poster_path}` : "",
       director,
