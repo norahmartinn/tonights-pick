@@ -111,6 +111,7 @@ function HomePage() {
           description: rec.description,
           reason: rec.reason,
           poster_url: rec.poster_url ?? "",
+          letterboxd_url: rec.letterboxd_url ?? "",
           prompt,
         },
       });

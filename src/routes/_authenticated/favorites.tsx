@@ -96,12 +96,24 @@ function FavoritesPage() {
                     {f.platform}
                   </span>
                 )}
-                {f.rating && (
+                {f.rating && f.letterboxd_url ? (
+                  <a
+                    href={f.letterboxd_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={t("openOnLetterboxd")}
+                    title={t("openOnLetterboxd")}
+                    className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-muted inline-flex items-center gap-1 btn-lift"
+                  >
+                    <Star size={10} fill="currentColor" /> {f.rating}
+                    <LetterboxdLogo height={8} />
+                  </a>
+                ) : f.rating ? (
                   <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-muted inline-flex items-center gap-1">
                     <Star size={10} fill="currentColor" /> {f.rating}
                     {f.rating.endsWith("/5") && <LetterboxdLogo height={8} />}
                   </span>
-                )}
+                ) : null}
               </div>
             </div>
           </li>

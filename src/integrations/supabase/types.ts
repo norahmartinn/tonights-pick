@@ -20,6 +20,7 @@ export type Database = {
           description: string | null
           genre: string | null
           id: string
+          letterboxd_url: string | null
           platform: string | null
           poster_url: string | null
           prompt: string | null
@@ -33,6 +34,7 @@ export type Database = {
           description?: string | null
           genre?: string | null
           id?: string
+          letterboxd_url?: string | null
           platform?: string | null
           poster_url?: string | null
           prompt?: string | null
@@ -46,6 +48,7 @@ export type Database = {
           description?: string | null
           genre?: string | null
           id?: string
+          letterboxd_url?: string | null
           platform?: string | null
           poster_url?: string | null
           prompt?: string | null

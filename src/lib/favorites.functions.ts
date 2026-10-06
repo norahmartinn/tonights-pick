@@ -10,6 +10,7 @@ const FavInput = z.object({
   description: z.string().optional().default(""),
   reason: z.string().optional().default(""),
   poster_url: z.string().optional().default(""),
+  letterboxd_url: z.string().optional().default(""),
   prompt: z.string().optional().default(""),
 });
 
@@ -17,11 +18,19 @@ export const saveFavorite = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => FavInput.parse(input))
   .handler(async ({ data, context }) => {
-    const { error, data: row } = await context.supabase
-      .from("favorites")
-      .insert({ ...data, user_id: context.userId })
-      .select()
-      .single();
+    const guardar = (fila: Partial<typeof data> & { title: string }) =>
+      context.supabase
+        .from("favorites")
+        .insert({ ...fila, user_id: context.userId })
+        .select()
+        .single();
+    let { error, data: row } = await guardar(data);
+    // Una base de datos que aún no tenga la columna letterboxd_url no debe
+    // impedir guardar: se guarda sin el enlace.
+    if (error && /letterboxd_url/.test(error.message)) {
+      const { letterboxd_url: _sinEnlace, ...resto } = data;
+      ({ error, data: row } = await guardar(resto));
+    }
     if (error) throw new Error(error.message);
     return row;
   });

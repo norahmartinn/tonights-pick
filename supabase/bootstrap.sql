@@ -38,8 +38,11 @@ CREATE TABLE IF NOT EXISTS public.favorites (
   reason TEXT,
   poster_url TEXT,
   prompt TEXT,
+  letterboxd_url TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+-- Para bases creadas antes de que existiera el enlace a Letterboxd.
+ALTER TABLE public.favorites ADD COLUMN IF NOT EXISTS letterboxd_url TEXT;
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.favorites TO authenticated;
 GRANT ALL ON public.favorites TO service_role;
 ALTER TABLE public.favorites ENABLE ROW LEVEL SECURITY;
