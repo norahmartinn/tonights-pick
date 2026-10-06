@@ -1,4 +1,4 @@
-import { letterboxdRating } from "./letterboxd.server";
+import { letterboxdFilm } from "./letterboxd.server";
 
 const BASE = "https://api.themoviedb.org/3";
 const IMG = "https://image.tmdb.org/t/p/w500";
@@ -16,6 +16,8 @@ export type TmdbDetails = {
   year: string;
   genre: string;
   rating: string;
+  /** Ficha de la película en Letterboxd; vacío en series o si no consta. */
+  letterboxd_url: string;
   description: string;
   poster_url: string;
   director: string;
@@ -122,12 +124,12 @@ export async function fetchDetails(
     // mucho texto visible como para dejarlo siempre en inglés.
     // La nota de las películas es la de Letterboxd; se pide a la vez para no
     // alargar la espera. Las series no están en Letterboxd y siguen con TMDB.
-    const [d, notaLetterboxd] = await Promise.all([
+    const [d, letterboxd] = await Promise.all([
       tmdb<Detail>(`/${media_type}/${id}`, {
         append_to_response: "credits,watch/providers",
         language: idiomaUi === "es" ? "es-ES" : "en-US",
       }),
-      media_type === "movie" ? letterboxdRating(id) : Promise.resolve(""),
+      media_type === "movie" ? letterboxdFilm(id) : Promise.resolve({ rating: "", url: "" }),
     ]);
     const title = d.title ?? d.name ?? "";
     const cast = (d.credits?.cast ?? [])
@@ -179,7 +181,8 @@ export async function fetchDetails(
       title,
       year: yearOf(d.release_date ?? d.first_air_date),
       genre: (d.genres ?? []).map((g) => g.name).join(", "),
-      rating: notaLetterboxd || (d.vote_average ? `${d.vote_average.toFixed(1)}/10` : ""),
+      rating: letterboxd.rating || (d.vote_average ? `${d.vote_average.toFixed(1)}/10` : ""),
+      letterboxd_url: letterboxd.url,
       description: d.overview ?? "",
       poster_url: d.poster_path ? `${IMG}${d.poster_path}` : "",
       director,

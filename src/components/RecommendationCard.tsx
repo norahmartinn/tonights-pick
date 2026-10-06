@@ -49,11 +49,25 @@ export function RecommendationCard({ rec }: { rec: Recommendation }) {
 
         {rec.rating && (
           <div className="absolute bottom-3 right-3">
-            <span className="bg-card/95 text-card-foreground text-xs font-bold px-2.5 py-1 rounded-full elegant-border-sm inline-flex items-center gap-1">
-              <Star size={12} fill="currentColor" className="text-gold" /> {rec.rating}
-              {/* Solo Letterboxd puntúa sobre 5; la de TMDB va sobre 10. */}
-              {rec.rating.endsWith("/5") && <LetterboxdLogo height={10} />}
-            </span>
+            {rec.letterboxd_url ? (
+              <a
+                href={rec.letterboxd_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={t("openOnLetterboxd")}
+                title={t("openOnLetterboxd")}
+                className="bg-card/95 text-card-foreground text-xs font-bold px-2.5 py-1 rounded-full elegant-border-sm inline-flex items-center gap-1 btn-lift hover:bg-card"
+              >
+                <Star size={12} fill="currentColor" className="text-gold" /> {rec.rating}
+                <LetterboxdLogo height={10} />
+              </a>
+            ) : (
+              <span className="bg-card/95 text-card-foreground text-xs font-bold px-2.5 py-1 rounded-full elegant-border-sm inline-flex items-center gap-1">
+                <Star size={12} fill="currentColor" className="text-gold" /> {rec.rating}
+                {/* Solo Letterboxd puntúa sobre 5; la de TMDB va sobre 10. */}
+                {rec.rating.endsWith("/5") && <LetterboxdLogo height={10} />}
+              </span>
+            )}
           </div>
         )}
       </div>

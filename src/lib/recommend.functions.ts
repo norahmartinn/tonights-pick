@@ -17,6 +17,8 @@ export type Recommendation = {
   genre: string;
   platform: string;
   rating: string;
+  /** Ficha en Letterboxd, si la nota viene de allí. No se guarda en base de datos. */
+  letterboxd_url?: string;
   description: string;
   reason: string;
   poster_url?: string;
@@ -26,6 +28,17 @@ export type Recommendation = {
   cast_members?: string;
   media_type?: "movie" | "tv";
 };
+
+/** Cuántas propuestas se le piden al modelo para quedarse con la mejor valorada. */
+const N_CANDIDATOS = 3;
+
+/** "4.2/5" (Letterboxd) y "8.1/10" (TMDB) a una misma escala, para compararlas. */
+function notaSobreDiez(rating: string): number {
+  const m = rating.match(/^([\d.]+)\/(\d+)$/);
+  if (!m) return 0;
+  const nota = (parseFloat(m[1]) / Number(m[2])) * 10;
+  return Number.isFinite(nota) ? nota : 0;
+}
 
 export const recommend = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -75,7 +88,7 @@ export const recommend = createServerFn({ method: "POST" })
         ? '\n\nIMPORTANT: write "description", "reason" and "mood" in SPANISH (España). Keep "title" in its original language and "platform" as the service name.'
         : '\n\nIMPORTANT: write "description", "reason" and "mood" in ENGLISH.';
 
-    const system = `You are Tonight, a witty movie & TV recommender. Always return ONE single, specific real title (movie or show) that exists. Prefer well-known titles available on major streaming platforms. Respond ONLY as compact JSON matching this schema:
+    const system = `You are Tonight, a witty movie & TV recommender. Always suggest ${N_CANDIDATOS} DIFFERENT, specific real titles (movies or shows) that exist and that each fit the request on their own, best fit first. Prefer well-known titles available on major streaming platforms, and among those that fit, favour the ones film lovers rate highest (a high Letterboxd average) over ones that are merely popular. Respond ONLY as compact JSON of the form {"picks": [ ... ]}, where every pick matches this schema:
 {
   "title": string,
   "year": string,
@@ -189,13 +202,16 @@ No markdown, no commentary.${idiomaSalida}${tasteContext}`;
       const excluir = veta.length
         ? `\nDo NOT recommend any of these (already shown or unverifiable): ${veta.join(", ")}.`
         : "";
-      return `${fecha}\n\nUser mood / request: "${data.prompt}".${excluir}${kindInstruction}${listaCandidatos}\nPick ONE perfect title.`;
+      return `${fecha}\n\nUser mood / request: "${data.prompt}".${excluir}${kindInstruction}${listaCandidatos}\nSuggest ${N_CANDIDATOS} titles that fit.`;
     };
 
-    const pedirTitulo = async (evitar: string[]): Promise<Recommendation> => {
+    const pedirTitulos = async (evitar: string[]): Promise<Recommendation[]> => {
       const content = await chatJSON(system, armarMensaje(evitar));
       try {
-        return JSON.parse(content) as Recommendation;
+        const json = JSON.parse(content) as { picks?: Recommendation[] } & Recommendation;
+        // Por si el modelo ignora el envoltorio y devuelve una sola ficha.
+        const picks = Array.isArray(json.picks) ? json.picks : [json];
+        return picks.filter((p) => p && typeof p.title === "string" && p.title.trim());
       } catch {
         throw new Error("AI returned an invalid response. Please try again.");
       }
@@ -214,31 +230,43 @@ No markdown, no commentary.${idiomaSalida}${tasteContext}`;
 
     const { findTitle } = await import("./tmdb.server");
 
-    let parsed = await pedirTitulo([]);
+    // El modelo propone varias que encajan y aquí se comprueba cada una contra
+    // TMDB y Letterboxd. Sale la mejor valorada: el modelo no se sabe las notas,
+    // así que pedirle que "elija las buenas" sin comprobarlo no garantiza nada.
+    // De paso se caen las inventadas (las que TMDB no encuentra) y las que se
+    // saltan la lista obligatoria, que pasa aunque se le diga que no.
+    const verificar = async (propuestas: Recommendation[]) => {
+      const fichas = await Promise.all(
+        propuestas.map(async (p) => ({
+          parsed: p,
+          tmdb: await findTitle(p.title, p.year, data.kind, pais, data.lang ?? "en").catch(() => null),
+        })),
+      );
+      return fichas
+        .filter((f): f is typeof f & { tmdb: NonNullable<typeof f.tmdb> } => {
+          if (!f.tmdb) return false;
+          if (!titulosPermitidos) return true;
+          return (
+            titulosPermitidos.has(f.parsed.title.toLowerCase()) ||
+            titulosPermitidos.has(f.tmdb.title.toLowerCase())
+          );
+        })
+        // sort es estable: a igual nota gana la que el modelo puso antes.
+        .sort((a, b) => notaSobreDiez(b.tmdb.rating) - notaSobreDiez(a.tmdb.rating));
+    };
 
-    // El modelo se salta la lista con cierta frecuencia aunque se le diga que es
-    // obligatoria. Comprobarlo es barato; confiar, no.
-    if (titulosPermitidos && parsed?.title && !titulosPermitidos.has(parsed.title.toLowerCase())) {
-      const segundo = await pedirTitulo([parsed.title]).catch(() => null);
-      if (segundo?.title && titulosPermitidos.has(segundo.title.toLowerCase())) parsed = segundo;
+    const propuestas = await pedirTitulos([]);
+    let validas = await verificar(propuestas);
+
+    // Ninguna se pudo verificar: una segunda tanda vetando las fantasma, en
+    // vez de mostrar una ficha falsa.
+    if (!validas.length) {
+      const segundas = await pedirTitulos(propuestas.map((p) => p.title)).catch(() => []);
+      validas = await verificar(segundas);
     }
 
-    let tmdb = await findTitle(parsed.title ?? "", parsed.year, data.kind, pais, data.lang ?? "en").catch(() => null);
-
-    // Si TMDB no lo encuentra, lo más probable es que el modelo se lo haya
-    // inventado (pasa sobre todo con peticiones de nicho). Una segunda
-    // oportunidad, vetando el título fantasma, en vez de mostrar una ficha falsa.
-    if (!tmdb && parsed?.title) {
-      const fantasma = parsed.title;
-      const segundo = await pedirTitulo([fantasma]).catch(() => null);
-      if (segundo?.title) {
-        const verificado = await findTitle(segundo.title, segundo.year, data.kind, pais, data.lang ?? "en").catch(() => null);
-        if (verificado) {
-          parsed = segundo;
-          tmdb = verificado;
-        }
-      }
-    }
+    const parsed: Partial<Recommendation> = validas[0]?.parsed ?? propuestas[0] ?? {};
+    const tmdb = validas[0]?.tmdb ?? null;
 
     const result: Recommendation = {
       title: parsed.title ?? "Unknown",
@@ -264,6 +292,7 @@ No markdown, no commentary.${idiomaSalida}${tasteContext}`;
       result.year = tmdb.year || result.year;
       result.genre = tmdb.genre || result.genre;
       result.rating = tmdb.rating || result.rating;
+      result.letterboxd_url = tmdb.letterboxd_url || undefined;
       result.poster_url = tmdb.poster_url || result.poster_url;
       result.director = tmdb.director || result.director;
       result.cast_members = tmdb.cast_members || result.cast_members;
