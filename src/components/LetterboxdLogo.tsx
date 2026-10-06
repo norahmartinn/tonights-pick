@@ -1,19 +1,27 @@
-/** Los tres puntos de Letterboxd, para marcar de dónde viene la nota. */
+import dots from "@/assets/letterboxd-dots.png";
+import icon from "@/assets/letterboxd-icon.png";
+
+/**
+ * Logo de Letterboxd, para marcar de dónde viene la nota. En claro van los
+ * tres puntos sueltos; en oscuro, el icono con su fondo, que es donde se lee.
+ */
 export function LetterboxdLogo({ height = 10 }: { height?: number }) {
   return (
-    <svg
-      viewBox="0 0 26 10"
-      height={height}
-      width={height * 2.6}
-      role="img"
-      aria-label="Letterboxd"
-      className="shrink-0"
-    >
-      <title>Letterboxd</title>
-      <circle cx="5" cy="5" r="5" fill="#FF8000" />
-      <circle cx="21" cy="5" r="5" fill="#40BCF4" />
-      <circle cx="13" cy="5" r="5" fill="#00E054" />
-      <path d="M9 2a5 5 0 0 1 0 6a5 5 0 0 1 0-6zM17 2a5 5 0 0 1 0 6a5 5 0 0 1 0-6z" fill="#fff" />
-    </svg>
+    <>
+      <img
+        src={dots}
+        alt="Letterboxd"
+        title="Letterboxd"
+        style={{ height, width: "auto" }}
+        className="shrink-0 dark:hidden"
+      />
+      <img
+        src={icon}
+        alt="Letterboxd"
+        title="Letterboxd"
+        style={{ height: height * 1.6, width: "auto" }}
+        className="shrink-0 hidden dark:block"
+      />
+    </>
   );
 }
